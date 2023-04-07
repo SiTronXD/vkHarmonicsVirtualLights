@@ -1,5 +1,5 @@
-# Supreme Void
-A slightly more advanced Vulkan renderer.
+# Harmonic Virtual Lights
+An implementation of the HVL algorithm for my bachelor thesis project.
 
 # TODO:
 

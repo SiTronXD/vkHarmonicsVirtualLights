@@ -41,9 +41,12 @@ QueueFamilyIndices QueueFamilies::findQueueFamilies(VkSurfaceKHR surface, VkPhys
 	int i = 0;
 	for (const auto& queueFamily : queueFamilies)
 	{
-		// Graphics queue family
-		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		// Graphics/compute queue family
+		if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
+			(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
+		{
 			indices.graphicsFamily = i;
+		}
 
 		// Present queue family
 		VkBool32 presentSupport = false;
