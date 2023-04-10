@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "Renderer.h"
-#include "TextureCube.h"
 #include "../ResourceManager.h"
 #include "Vulkan/PipelineBarrier.h"
 #include "Vulkan/DescriptorSet.h"
+#include "Texture/TextureCube.h"
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -93,12 +93,13 @@ void Renderer::initVulkan()
 	);
 
 	this->createSyncObjects();
-	this->createUniformBuffers();
+	this->createCamUbo();
 
 	this->gfxResManager.init(this->gfxAllocContext);
 	this->resourceProcessor.init(*this, *this->resourceManager, this->gfxAllocContext);
 
 	this->brdfLutTextureIndex = this->resourceProcessor.createBrdfLut();
+	this->rsm.init(this->gfxAllocContext);
 }
 
 void Renderer::initVma()
@@ -189,6 +190,8 @@ void Renderer::cleanup()
 {
 	this->cleanupImgui();
 
+	this->rsm.cleanup();
+
 	this->gfxResManager.cleanup();
 
 	this->swapchain.cleanup();
@@ -214,12 +217,11 @@ void Renderer::cleanup()
 	this->instance.cleanup();
 }
 
-void Renderer::createUniformBuffers()
+void Renderer::createCamUbo()
 {
-	VkDeviceSize bufferSize = sizeof(UBO);
 	this->uniformBuffer.createDynamicCpuBuffer(
 		this->gfxAllocContext,
-		bufferSize,
+		sizeof(CamUBO),
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
 	);
 }
@@ -369,12 +371,12 @@ void Renderer::setSkyboxTexture(uint32_t skyboxTextureIndex)
 void Renderer::updateUniformBuffer(const Camera& camera)
 {
 	// Create ubo struct with matrix data
-	UBO ubo{};
-	ubo.vp = camera.getProjectionMatrix() * camera.getViewMatrix();
-	ubo.pos = glm::vec4(camera.getPosition(), 1.0f);
+	CamUBO camUbo{};
+	camUbo.vp = camera.getProjectionMatrix() * camera.getViewMatrix();
+	camUbo.pos = glm::vec4(camera.getPosition(), 1.0f);
 
 	// Update buffer contents
-	this->uniformBuffer.updateBuffer(&ubo);
+	this->uniformBuffer.updateBuffer(&camUbo);
 }
 
 void Renderer::recordCommandBuffer(
@@ -388,23 +390,187 @@ void Renderer::recordCommandBuffer(
 	// Begin
 	commandBuffer.resetAndBegin();
 
-		// Record dynamic viewport
-		float swapchainHeight = (float)this->swapchain.getHeight();
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = swapchainHeight;
-		viewport.width = static_cast<float>(this->swapchain.getWidth());
-		viewport.height = -swapchainHeight;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		commandBuffer.setViewport(viewport);
+	// ---------- Render scene to RSM ----------
+	{
+		VkExtent2D rsmExtent{ this->rsm.getWidth(), this->rsm.getHeight() };
 
-		// Record dynamic scissor
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = this->swapchain.getVkExtent();
-		commandBuffer.setScissor(scissor);
+		// Viewport
+		float swapchainHeight = (float) rsmExtent.height;
+		VkViewport rsmViewport{};
+		rsmViewport.x = 0.0f;
+		rsmViewport.y = swapchainHeight;
+		rsmViewport.width = static_cast<float>(rsmExtent.width);
+		rsmViewport.height = -swapchainHeight;
+		rsmViewport.minDepth = 0.0f;
+		rsmViewport.maxDepth = 1.0f;
+		commandBuffer.setViewport(rsmViewport);
 
+		// Scissor
+		VkRect2D rsmScissor{};
+		rsmScissor.offset = { 0, 0 };
+		rsmScissor.extent = rsmExtent;
+		commandBuffer.setScissor(rsmScissor);
+
+		// Transition layouts for render targets
+		std::array<VkImageMemoryBarrier2, 2> memoryBarriers =
+		{
+			// Position
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_NONE,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				this->rsm.getPositionTexture().getVkImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT
+			),
+
+			// Normal
+			/*PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_NONE,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				this->rsm.getNormalTexture().getVkImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT
+			),*/
+
+			// Depth
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_NONE,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, // Stage from "previous frame"
+				VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,	// Stage from "current frame"
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+				this->rsm.getDepthTexture().getVkImage(),
+				VK_IMAGE_ASPECT_DEPTH_BIT
+			)
+		};
+		commandBuffer.memoryBarrier(memoryBarriers.data(), memoryBarriers.size());
+
+		// Clear values for color and depth
+		std::array<VkClearValue, 2> clearValues{};
+		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+
+		// Color attachment
+		VkRenderingAttachmentInfo colorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		colorAttachment.imageView = this->rsm.getPositionTexture().getVkImageView();
+		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.clearValue = clearValues[0];
+
+		// Depth attachment
+		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		depthAttachment.imageView = this->rsm.getDepthTexture().getVkImageView();
+		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.clearValue = clearValues[1];
+
+		// Begin rendering
+		VkRenderingInfo renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
+		renderingInfo.renderArea = rsmScissor;
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = 1;
+		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.pDepthAttachment = &depthAttachment;
+		commandBuffer.beginRendering(renderingInfo);
+
+		{
+			uint32_t currentPipelineIndex = ~0u;
+			uint32_t numPipelineSwitches = 0;
+
+			// Common descriptor set bindings
+
+			// Binding 0
+			VkDescriptorBufferInfo rsmUboInfo{};
+			rsmUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
+			rsmUboInfo.range = sizeof(CamUBO);
+
+			std::array<VkWriteDescriptorSet, 1> writeDescriptorSets
+			{
+				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &rsmUboInfo)
+			};
+
+			// Loop through entities with mesh components
+			auto view = scene.getRegistry().view<Material, MeshComponent, Transform>();
+			view.each([&](
+				const Material& material,
+				const MeshComponent& meshComp,
+				const Transform& transform)
+				{
+					// Switch pipeline if necessary
+					if (currentPipelineIndex != material.rsmPipelineIndex)
+					{
+						commandBuffer.bindPipeline(
+							this->gfxResManager.getPipeline(material.rsmPipelineIndex)
+						);
+
+						currentPipelineIndex = material.rsmPipelineIndex;
+						numPipelineSwitches++;
+					}
+
+					// Push descriptor set update
+					commandBuffer.pushDescriptorSet(
+						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
+						0,
+						writeDescriptorSets.size(),
+						writeDescriptorSets.data()
+					);
+
+					// Push constant data
+					PCD pushConstantData{};
+					pushConstantData.modelMat = transform.modelMat;
+					commandBuffer.pushConstant(
+						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
+						&pushConstantData
+					);
+
+					// Render mesh
+					const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
+
+					// Record binding vertex/index buffer
+					commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
+					commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
+
+					// Record draw
+					commandBuffer.drawIndexed(currentMesh.getNumIndices());
+				}
+			);
+		}
+
+		// End rendering
+		commandBuffer.endRendering();
+	}
+
+	// Dynamic viewport
+	float swapchainHeight = (float)this->swapchain.getHeight();
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = swapchainHeight;
+	viewport.width = static_cast<float>(this->swapchain.getWidth());
+	viewport.height = -swapchainHeight;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	commandBuffer.setViewport(viewport);
+
+	// Dynamic scissor
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = this->swapchain.getVkExtent();
+	commandBuffer.setScissor(scissor);
+
+	// Bind dummy pipeline before begin rendering
+	commandBuffer.bindPipeline(this->gfxResManager.getOneHdrPipeline());
+
+	// ---------- Render scene to HDR buffer ----------
+	{
 		// Transition layouts for color and depth
 		std::array<VkImageMemoryBarrier2, 2> memoryBarriers =
 		{
@@ -440,7 +606,7 @@ void Renderer::recordCommandBuffer(
 		clearValues[1].depthStencil = { 1.0f, 0 };
 
 		// Color attachment
-		VkRenderingAttachmentInfo colorAttachment { VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		VkRenderingAttachmentInfo colorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		colorAttachment.imageView = this->swapchain.getHdrTexture().getVkImageView();
 		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -448,7 +614,7 @@ void Renderer::recordCommandBuffer(
 		colorAttachment.clearValue = clearValues[0];
 
 		// Depth attachment
-		VkRenderingAttachmentInfo depthAttachment { VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		depthAttachment.imageView = this->swapchain.getDepthTexture().getVkImageView();
 		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -456,7 +622,7 @@ void Renderer::recordCommandBuffer(
 		depthAttachment.clearValue = clearValues[1];
 
 		// Begin rendering
-		VkRenderingInfo renderingInfo { VK_STRUCTURE_TYPE_RENDERING_INFO };
+		VkRenderingInfo renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
 		renderingInfo.renderArea = { { 0, 0 }, this->swapchain.getVkExtent() };
 		renderingInfo.layerCount = 1;
 		renderingInfo.colorAttachmentCount = 1;
@@ -464,130 +630,131 @@ void Renderer::recordCommandBuffer(
 		renderingInfo.pDepthAttachment = &depthAttachment;
 		commandBuffer.beginRendering(renderingInfo);
 
-			{
-				uint32_t currentPipelineIndex = ~0u;
-				uint32_t numPipelineSwitches = 0;
+		{
+			uint32_t currentPipelineIndex = ~0u;
+			uint32_t numPipelineSwitches = 0;
 
-				// Common descriptor set bindings
+			// Common descriptor set bindings
 
-				// Binding 0
-				VkDescriptorBufferInfo uboInfo{};
-				uboInfo.buffer = this->uniformBuffer.getVkBuffer(GfxState::getFrameIndex());
-				uboInfo.range = sizeof(UBO);
+			// Binding 0
+			VkDescriptorBufferInfo uboInfo{};
+			uboInfo.buffer = this->uniformBuffer.getVkBuffer(GfxState::getFrameIndex());
+			uboInfo.range = sizeof(CamUBO);
 
-				// Binding 1
-				const Texture* brdfLutTexture = 
-					this->resourceManager->getTexture(this->brdfLutTextureIndex);
-				VkDescriptorImageInfo brdfImageInfo{};
-				brdfImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				brdfImageInfo.imageView = brdfLutTexture->getVkImageView();
-				brdfImageInfo.sampler = brdfLutTexture->getVkSampler();
+			// Binding 1
+			const Texture* brdfLutTexture =
+				this->resourceManager->getTexture(this->brdfLutTextureIndex);
+			VkDescriptorImageInfo brdfImageInfo{};
+			brdfImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			brdfImageInfo.imageView = brdfLutTexture->getVkImageView();
+			brdfImageInfo.sampler = brdfLutTexture->getVkSampler();
 
-				// Binding 2
-				const Texture* prefilteredEnvMap = 
-					this->resourceManager->getTexture(
-						static_cast<TextureCube*>(
-							this->resourceManager->getTexture(this->skyboxTextureIndex)
+			// Binding 2
+			const Texture* prefilteredEnvMap =
+				this->resourceManager->getTexture(
+					static_cast<TextureCube*>(
+						this->resourceManager->getTexture(this->skyboxTextureIndex)
 						)->getPrefilteredMapIndex()
-					);
-				VkDescriptorImageInfo prefilteredImageInfo{};
-				prefilteredImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				prefilteredImageInfo.imageView = prefilteredEnvMap->getVkImageView();
-				prefilteredImageInfo.sampler = prefilteredEnvMap->getVkSampler();
-
-				VkDescriptorImageInfo albedoImageInfo{};
-				albedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				VkDescriptorImageInfo roughnessImageInfo{};
-				roughnessImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				VkDescriptorImageInfo metallicImageInfo{};
-				metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-				std::array<VkWriteDescriptorSet, 6> writeDescriptorSets
-				{
-					DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
-					DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &brdfImageInfo),
-					DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &prefilteredImageInfo),
-
-					DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-					DescriptorSet::writeImage(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-					DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
-				};
-
-				// Loop through entities with mesh components
-				auto view = scene.getRegistry().view<Material, MeshComponent, Transform>();
-				view.each([&](
-					const Material& material,
-					const MeshComponent& meshComp,
-					const Transform& transform)
-					{
-						// Switch pipeline if necessary
-						if (currentPipelineIndex != material.pipelineIndex)
-						{
-							commandBuffer.bindPipeline(
-								this->gfxResManager.getPipeline(material.pipelineIndex)
-							);
-
-							currentPipelineIndex = material.pipelineIndex;
-							numPipelineSwitches++;
-						}
-
-						// Binding 3
-						const Texture* albedoTexture = 
-							this->resourceManager->getTexture(material.albedoTextureId);
-						albedoImageInfo.imageView = albedoTexture->getVkImageView();
-						albedoImageInfo.sampler = albedoTexture->getVkSampler();
-
-						// Binding 4
-						const Texture* roughnessTexture =
-							this->resourceManager->getTexture(material.roughnessTextureId);
-						roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
-						roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
-
-						// Binding 5
-						const Texture* metallicTexture =
-							this->resourceManager->getTexture(material.metallicTextureId);
-						metallicImageInfo.imageView = metallicTexture->getVkImageView();
-						metallicImageInfo.sampler = metallicTexture->getVkSampler();
-
-						// Push descriptor set update
-						writeDescriptorSets[3].pImageInfo = &albedoImageInfo;
-						writeDescriptorSets[4].pImageInfo = &roughnessImageInfo;
-						writeDescriptorSets[5].pImageInfo = &metallicImageInfo;
-						commandBuffer.pushDescriptorSet(
-							this->gfxResManager.getGraphicsPipelineLayout(),
-							0,
-							writeDescriptorSets.size(),
-							writeDescriptorSets.data()
-						);
-
-						// Push constant data
-						PCD pushConstantData{};
-						pushConstantData.modelMat = transform.modelMat;
-						pushConstantData.materialProperties.x = material.roughness;
-						pushConstantData.materialProperties.y = material.metallic;
-						commandBuffer.pushConstant(
-							this->gfxResManager.getGraphicsPipelineLayout(), 
-							&pushConstantData
-						);
-
-						// Render mesh
-						const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-
-						// Record binding vertex/index buffer
-						commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-						commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
-
-						// Record draw
-						commandBuffer.drawIndexed(currentMesh.getNumIndices());
-					}
 				);
-			}
+			VkDescriptorImageInfo prefilteredImageInfo{};
+			prefilteredImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			prefilteredImageInfo.imageView = prefilteredEnvMap->getVkImageView();
+			prefilteredImageInfo.sampler = prefilteredEnvMap->getVkSampler();
+
+			VkDescriptorImageInfo albedoImageInfo{};
+			albedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo roughnessImageInfo{};
+			roughnessImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo metallicImageInfo{};
+			metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			std::array<VkWriteDescriptorSet, 6> writeDescriptorSets
+			{
+				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
+				DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &brdfImageInfo),
+				DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &prefilteredImageInfo),
+
+				DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
+			};
+
+			// Loop through entities with mesh components
+			auto view = scene.getRegistry().view<Material, MeshComponent, Transform>();
+			view.each([&](
+				const Material& material,
+				const MeshComponent& meshComp,
+				const Transform& transform)
+				{
+					// Switch pipeline if necessary
+					if (currentPipelineIndex != material.pipelineIndex)
+					{
+						commandBuffer.bindPipeline(
+							this->gfxResManager.getPipeline(material.pipelineIndex)
+						);
+
+						currentPipelineIndex = material.pipelineIndex;
+						numPipelineSwitches++;
+					}
+
+			// Binding 3
+			const Texture* albedoTexture =
+				this->resourceManager->getTexture(material.albedoTextureId);
+			albedoImageInfo.imageView = albedoTexture->getVkImageView();
+			albedoImageInfo.sampler = albedoTexture->getVkSampler();
+
+			// Binding 4
+			const Texture* roughnessTexture =
+				this->resourceManager->getTexture(material.roughnessTextureId);
+			roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
+			roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
+
+			// Binding 5
+			const Texture* metallicTexture =
+				this->resourceManager->getTexture(material.metallicTextureId);
+			metallicImageInfo.imageView = metallicTexture->getVkImageView();
+			metallicImageInfo.sampler = metallicTexture->getVkSampler();
+
+			// Push descriptor set update
+			writeDescriptorSets[3].pImageInfo = &albedoImageInfo;
+			writeDescriptorSets[4].pImageInfo = &roughnessImageInfo;
+			writeDescriptorSets[5].pImageInfo = &metallicImageInfo;
+			commandBuffer.pushDescriptorSet(
+				this->gfxResManager.getGraphicsPipelineLayout(),
+				0,
+				writeDescriptorSets.size(),
+				writeDescriptorSets.data()
+			);
+
+			// Push constant data
+			PCD pushConstantData{};
+			pushConstantData.modelMat = transform.modelMat;
+			pushConstantData.materialProperties.x = material.roughness;
+			pushConstantData.materialProperties.y = material.metallic;
+			commandBuffer.pushConstant(
+				this->gfxResManager.getGraphicsPipelineLayout(),
+				&pushConstantData
+			);
+
+			// Render mesh
+			const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
+
+			// Record binding vertex/index buffer
+			commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
+			commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
+
+			// Record draw
+			commandBuffer.drawIndexed(currentMesh.getNumIndices());
+				}
+			);
+		}
 
 		// End rendering
 		commandBuffer.endRendering();
+	}
 
-		// ---------- Imgui ----------
-
+	// ---------- Render imgui to HDR buffer ----------
+	{
 		// Imgui using dynamic rendering
 		VkRenderingAttachmentInfo imguiColorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		imguiColorAttachment.imageView = this->swapchain.getHdrTexture().getVkImageView();
@@ -616,10 +783,10 @@ void Renderer::recordCommandBuffer(
 
 		// End rendering
 		commandBuffer.endRendering();
+	}
 
-
-		// ---------- Compute Post Process ----------
-
+	// ---------- Compute Post Process ----------
+	{
 		// Transition HDR and swapchain image
 		VkImageMemoryBarrier2 postProcessMemoryBarriers[2] =
 		{
@@ -677,21 +844,21 @@ void Renderer::recordCommandBuffer(
 
 		// Push constant
 		PostProcessPCD postProcessData{};
-		postProcessData.resolution = 
+		postProcessData.resolution =
 			glm::uvec4(
-				this->swapchain.getVkExtent().width, 
-				this->swapchain.getVkExtent().height, 
-				0u, 
+				this->swapchain.getVkExtent().width,
+				this->swapchain.getVkExtent().height,
+				0u,
 				0u
 			);
 		commandBuffer.pushConstant(
 			this->postProcessPipelineLayout,
-			(void*) &postProcessData
+			(void*)&postProcessData
 		);
 
 		// Run compute shader
 		commandBuffer.dispatch(
-			(postProcessData.resolution.x + 16 - 1) / 16, 
+			(postProcessData.resolution.x + 16 - 1) / 16,
 			(postProcessData.resolution.y + 16 - 1) / 16
 		);
 
@@ -706,6 +873,7 @@ void Renderer::recordCommandBuffer(
 			this->swapchain.getVkImage(imageIndex),
 			VK_IMAGE_ASPECT_COLOR_BIT
 		);
+	}
 
 	// Stop recording
 	commandBuffer.end();
@@ -777,6 +945,7 @@ void Renderer::initForScene(Scene& scene)
 	tView.each([&](Material& material)
 		{
 			// Pipelines for materials
+			material.rsmPipelineIndex = this->gfxResManager.getMaterialRsmPipelineIndex(material);
 			material.pipelineIndex = this->gfxResManager.getMaterialPipelineIndex(material);
 
 			// Load default material textures

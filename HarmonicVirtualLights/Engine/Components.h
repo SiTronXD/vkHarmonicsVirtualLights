@@ -25,6 +25,7 @@ struct Material
 	uint32_t roughnessTextureId = ~0u;
 	uint32_t metallicTextureId = ~0u;
 
+	uint32_t rsmPipelineIndex = ~0u;
 	uint32_t pipelineIndex = ~0u;
 
 	Material()

@@ -2,8 +2,8 @@
 #include "ResourceManager.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/MeshData.h"
-#include "Graphics/TextureCube.h"
-#include "Graphics/Texture2D.h"
+#include "Graphics/Texture/TextureCube.h"
+#include "Graphics/Texture/Texture2D.h"
 
 ResourceManager::ResourceManager()
 	: gfxAllocContext(nullptr)

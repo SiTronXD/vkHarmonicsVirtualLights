@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "Buffer.h"
+#include "../Buffer/Buffer.h"
 
 struct GfxAllocContext;
 

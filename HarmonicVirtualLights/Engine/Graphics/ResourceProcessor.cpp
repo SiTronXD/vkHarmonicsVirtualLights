@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "ResourceProcessor.h"
 #include "Renderer.h"
-#include "Texture2D.h"
-#include "TextureCube.h"
+#include "Texture/Texture2D.h"
+#include "Texture/TextureCube.h"
 #include "../ResourceManager.h"
 #include "Vulkan/DescriptorSet.h"
 

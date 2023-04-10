@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Texture2D.h"
+#include "Texture/Texture2D.h"
 
 class Surface;
 class Window;

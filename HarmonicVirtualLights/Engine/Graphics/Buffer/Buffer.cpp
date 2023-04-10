@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Buffer.h"
-#include "GpuProperties.h"
+#include "../GpuProperties.h"
 
 void Buffer::createBuffer(
 	const GfxAllocContext& gfxAllocContext,

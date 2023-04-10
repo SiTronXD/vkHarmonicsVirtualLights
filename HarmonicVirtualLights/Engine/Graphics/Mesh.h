@@ -1,7 +1,7 @@
 #pragma once
 
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
+#include "Buffer/VertexBuffer.h"
+#include "Buffer/IndexBuffer.h"
 #include "MeshData.h"
 
 struct GfxAllocContext;

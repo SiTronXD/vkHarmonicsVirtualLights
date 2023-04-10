@@ -1,7 +1,8 @@
 #include "pch.h"
+#include "Texture/Texture.h"
 #include "GfxResourceManager.h"
 #include "Swapchain.h"
-#include "Texture.h"
+#include "RSM.h"
 #include "../Components.h"
 
 void GfxResourceManager::init(const GfxAllocContext& gfxAllocContext)
@@ -31,7 +32,38 @@ void GfxResourceManager::cleanup()
 	this->pipelines.clear();
 	this->pipelines.shrink_to_fit();
 
+	this->materialToRsmPipeline.clear();
+	this->materialToPipeline.clear();
+
 	this->graphicsPipelineLayout.cleanup();
+}
+
+uint32_t GfxResourceManager::getMaterialRsmPipelineIndex(const Material& material)
+{
+	std::string matStr = "";
+	material.matToStr(matStr);
+
+	// Check if index already exists
+	if (this->materialToRsmPipeline.count(matStr) != 0)
+		return this->materialToRsmPipeline[matStr];
+
+	// Add new pipeline
+	uint32_t newIndex = uint32_t(this->pipelines.size());
+	this->pipelines.push_back(Pipeline());
+	this->materialToRsmPipeline.insert({ matStr, newIndex });
+
+	// Initialize new pipeline
+	Pipeline& newPipeline = this->pipelines[newIndex];
+	newPipeline.createGraphicsPipeline(
+		*this->gfxAllocContext->device,
+		this->graphicsPipelineLayout,
+		RSM::POSITION_FORMAT,
+		Texture::getDepthBufferFormat(),
+		"Resources/Shaders/Rsm.vert.spv",
+		"Resources/Shaders/Rsm.frag.spv"
+	);
+
+	return newIndex;
 }
 
 uint32_t GfxResourceManager::getMaterialPipelineIndex(const Material& material)

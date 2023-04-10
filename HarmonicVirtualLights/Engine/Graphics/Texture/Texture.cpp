@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Texture.h"
-#include "GpuProperties.h"
+#include "../GpuProperties.h"
 
 bool Texture::hasStencilComponent(VkFormat format)
 {

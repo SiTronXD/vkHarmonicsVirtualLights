@@ -9,8 +9,8 @@ class Camera
 private:
 	const float MOVEMENT_SPEED = 2.0f;
 
-	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
 
 	glm::vec3 position;
 	glm::vec3 forwardDir;

@@ -2,7 +2,7 @@
 
 #include "../SMath.h"
 
-struct UBO
+struct CamUBO
 {
 	glm::mat4 vp;
 	glm::vec4 pos;

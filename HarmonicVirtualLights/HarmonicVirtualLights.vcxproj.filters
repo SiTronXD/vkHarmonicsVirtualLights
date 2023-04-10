@@ -96,7 +96,7 @@
     <ClCompile Include="Engine\Graphics\Vulkan\VulkanInstance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\Buffer.cpp">
+    <ClCompile Include="Engine\Graphics\Buffer\Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Camera.cpp">
@@ -114,7 +114,7 @@
     <ClCompile Include="Engine\Graphics\GpuProperties.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\IndexBuffer.cpp">
+    <ClCompile Include="Engine\Graphics\Buffer\IndexBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Mesh.cpp">
@@ -132,25 +132,25 @@
     <ClCompile Include="Engine\Graphics\Swapchain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\Texture.cpp">
+    <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\Texture2D.cpp">
+    <ClCompile Include="Engine\Graphics\Texture\Texture2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\TextureCube.cpp">
+    <ClCompile Include="Engine\Graphics\Texture\TextureCube.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\TextureData.cpp">
+    <ClCompile Include="Engine\Graphics\Texture\TextureData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\TextureDataFloat.cpp">
+    <ClCompile Include="Engine\Graphics\Texture\TextureDataFloat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\TextureDataUchar.cpp">
+    <ClCompile Include="Engine\Graphics\Texture\TextureDataUchar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\VertexBuffer.cpp">
+    <ClCompile Include="Engine\Graphics\Buffer\VertexBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\PCH\pch.cpp">
@@ -187,6 +187,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Vulkan\Legacy\DescriptorPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\RSM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -275,7 +278,7 @@
     <ClInclude Include="Engine\Graphics\Vulkan\VulkanInstance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\Buffer.h">
+    <ClInclude Include="Engine\Graphics\Buffer\Buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Camera.h">
@@ -296,7 +299,7 @@
     <ClInclude Include="Engine\Graphics\GpuProperties.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\IndexBuffer.h">
+    <ClInclude Include="Engine\Graphics\Buffer\IndexBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Mesh.h">
@@ -317,25 +320,25 @@
     <ClInclude Include="Engine\Graphics\Swapchain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\Texture.h">
+    <ClInclude Include="Engine\Graphics\Texture\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\Texture2D.h">
+    <ClInclude Include="Engine\Graphics\Texture\Texture2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\TextureCube.h">
+    <ClInclude Include="Engine\Graphics\Texture\TextureCube.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\TextureData.h">
+    <ClInclude Include="Engine\Graphics\Texture\TextureData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\TextureDataFloat.h">
+    <ClInclude Include="Engine\Graphics\Texture\TextureDataFloat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\TextureDataUchar.h">
+    <ClInclude Include="Engine\Graphics\Texture\TextureDataUchar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\VertexBuffer.h">
+    <ClInclude Include="Engine\Graphics\Buffer\VertexBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\PCH\pch.h">
@@ -380,6 +383,9 @@
     <ClInclude Include="Engine\Graphics\Vulkan\Legacy\DescriptorPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Graphics\RSM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Resources\Shaders\ComputeShaders\BrdfLut.comp" />
@@ -389,5 +395,7 @@
     <CustomBuild Include="Resources\Shaders\FragmentShaders\Skybox.frag" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\Pbr.vert" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\Skybox.vert" />
+    <CustomBuild Include="Resources\Shaders\FragmentShaders\Rsm.frag" />
+    <CustomBuild Include="Resources\Shaders\VertexShaders\Rsm.vert" />
   </ItemGroup>
 </Project>
