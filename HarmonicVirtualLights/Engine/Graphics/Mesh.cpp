@@ -17,7 +17,7 @@ void Mesh::createMesh(
 	this->vertexBuffer.createVertexBuffer(gfxAllocContext, meshData.getVertices());
 	this->indexBuffer.createIndexBuffer(gfxAllocContext, meshData.getIndices());
 
-	this->numIndices = meshData.getIndices().size();
+	this->numIndices = uint32_t(meshData.getIndices().size());
 }
 
 void Mesh::cleanup()

@@ -32,19 +32,19 @@ public:
 	void setViewport(const VkViewport& viewport);
 	void setScissor(const VkRect2D& scissor);
 	void bindVertexBuffer(const VertexBuffer& vertexBuffer);
-	void bindIndexBuffer(const IndexBuffer& indexBuffer, const uint32_t& frameIndex);
+	void bindIndexBuffer(const IndexBuffer& indexBuffer);
 	void bindDescriptorSet(
 		const PipelineLayout& pipelineLayout,
 		const VkDescriptorSet& descriptorSet);
 	void pushDescriptorSet(
 		const PipelineLayout& pipelineLayout,
-		const uint32_t& set,
-		const uint32_t& writeDescriptorCount,
+		uint32_t set,
+		uint32_t writeDescriptorCount,
 		const VkWriteDescriptorSet* writeDescriptorSets);
 	void pushConstant(
 		const PipelineLayout& pipelineLayout,
 		const void* data);
-	void drawIndexed(size_t numIndices);
+	void drawIndexed(uint32_t numIndices);
 	void dispatch(uint32_t groupCountX, uint32_t groupCountY = 1, uint32_t groupCountZ = 1);
 	void blit(
 		const VkImage& srcImage, VkImageLayout srcImageLayout,
@@ -71,7 +71,7 @@ public:
 		const VkImageSubresourceRange& subresourceRange);
 	void memoryBarrier(
 		const VkImageMemoryBarrier2* memoryBarriers,
-		const uint32_t& numMemoryBarriers);
+		uint32_t numMemoryBarriers);
 
 	void endRenderPass();
 	void endRendering();

@@ -49,7 +49,7 @@ void ResourceProcessor::prefilterCubeMaps()
 	for (size_t i = 0; i < this->resourceManager->getNumTextures(); ++i)
 	{
 		// Is cube map
-		TextureCube* texCube = dynamic_cast<TextureCube*>(this->resourceManager->getTexture(i));
+		TextureCube* texCube = dynamic_cast<TextureCube*>(this->resourceManager->getTexture(uint32_t(i)));
 		if (texCube == nullptr)
 			continue;
 
@@ -119,7 +119,7 @@ void ResourceProcessor::prefilterCubeMaps()
 				commandBuffer.pushDescriptorSet(
 					prefilterComputePipelineLayout,
 					0,
-					prefilterWriteDs.size(),
+					uint32_t(prefilterWriteDs.size()),
 					prefilterWriteDs.data()
 				);
 
@@ -228,7 +228,7 @@ uint32_t ResourceProcessor::createBrdfLut()
 		commandBuffer.pushDescriptorSet(
 			brdfComputePipelineLayout,
 			0,
-			pbrLutWriteDs.size(),
+			uint32_t(pbrLutWriteDs.size()),
 			pbrLutWriteDs.data()
 		);
 

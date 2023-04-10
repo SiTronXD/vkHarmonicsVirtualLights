@@ -5,6 +5,11 @@
 #include "RSM.h"
 #include "../Components.h"
 
+GfxResourceManager::GfxResourceManager()
+	: gfxAllocContext(nullptr)
+{
+}
+
 void GfxResourceManager::init(const GfxAllocContext& gfxAllocContext)
 {
 	this->gfxAllocContext = &gfxAllocContext;

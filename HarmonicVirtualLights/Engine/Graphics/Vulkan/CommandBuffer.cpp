@@ -85,7 +85,7 @@ void CommandBuffer::bindVertexBuffer(const VertexBuffer& vertexBuffer)
 	vkCmdBindVertexBuffers(this->commandBuffer, 0, 1, vertexBuffers, offsets);
 }
 
-void CommandBuffer::bindIndexBuffer(const IndexBuffer& indexBuffer, const uint32_t& frameIndex)
+void CommandBuffer::bindIndexBuffer(const IndexBuffer& indexBuffer)
 {
 #ifdef _DEBUG
 	if (indexBuffer.getVkBuffer() == VK_NULL_HANDLE)
@@ -113,8 +113,8 @@ void CommandBuffer::bindDescriptorSet(
 
 void CommandBuffer::pushDescriptorSet(
 	const PipelineLayout& pipelineLayout,
-	const uint32_t& set,
-	const uint32_t& writeDescriptorCount,
+	uint32_t set,
+	uint32_t writeDescriptorCount,
 	const VkWriteDescriptorSet* writeDescriptorSets)
 {
 	this->vkCmdPushDescriptorSetKHR(
@@ -141,9 +141,9 @@ void CommandBuffer::pushConstant(
 	);
 }
 
-void CommandBuffer::drawIndexed(size_t numIndices)
+void CommandBuffer::drawIndexed(uint32_t numIndices)
 {
-	vkCmdDrawIndexed(this->commandBuffer, static_cast<uint32_t>(numIndices), 1, 0, 0, 0);
+	vkCmdDrawIndexed(this->commandBuffer, numIndices, 1, 0, 0, 0);
 }
 
 void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
@@ -215,7 +215,7 @@ void CommandBuffer::memoryBarrier(
 
 void CommandBuffer::memoryBarrier(
 	const VkImageMemoryBarrier2* memoryBarriers,
-	const uint32_t& numMemoryBarriers)
+	uint32_t numMemoryBarriers)
 {
 	// Pipeline barrier 2
 	VkDependencyInfo depInfo{ VK_STRUCTURE_TYPE_DEPENDENCY_INFO };

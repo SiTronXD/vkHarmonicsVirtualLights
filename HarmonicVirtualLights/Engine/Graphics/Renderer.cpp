@@ -451,7 +451,7 @@ void Renderer::recordCommandBuffer(
 				VK_IMAGE_ASPECT_DEPTH_BIT
 			)
 		};
-		commandBuffer.memoryBarrier(memoryBarriers.data(), memoryBarriers.size());
+		commandBuffer.memoryBarrier(memoryBarriers.data(), uint32_t(memoryBarriers.size()));
 
 		// Clear values for color and depth
 		std::array<VkClearValue, 2> clearValues{};
@@ -523,7 +523,7 @@ void Renderer::recordCommandBuffer(
 						commandBuffer.pushDescriptorSet(
 							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
 							0,
-							writeDescriptorSets.size(),
+							uint32_t(writeDescriptorSets.size()),
 							writeDescriptorSets.data()
 						);
 
@@ -540,7 +540,7 @@ void Renderer::recordCommandBuffer(
 
 						// Record binding vertex/index buffer
 						commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-						commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
+						commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer());
 
 						// Record draw
 						commandBuffer.drawIndexed(currentMesh.getNumIndices());
@@ -614,7 +614,7 @@ void Renderer::recordCommandBuffer(
 				VK_IMAGE_ASPECT_DEPTH_BIT
 			)
 		};
-		commandBuffer.memoryBarrier(memoryBarriers.data(), memoryBarriers.size());
+		commandBuffer.memoryBarrier(memoryBarriers.data(), uint32_t(memoryBarriers.size()));
 
 		// Clear values for color and depth
 		std::array<VkClearValue, 2> clearValues{};
@@ -722,54 +722,54 @@ void Renderer::recordCommandBuffer(
 						numPipelineSwitches++;
 					}
 
-			// Binding 4
-			const Texture* albedoTexture =
-				this->resourceManager->getTexture(material.albedoTextureId);
-			albedoImageInfo.imageView = albedoTexture->getVkImageView();
-			albedoImageInfo.sampler = albedoTexture->getVkSampler();
+					// Binding 4
+					const Texture* albedoTexture =
+						this->resourceManager->getTexture(material.albedoTextureId);
+					albedoImageInfo.imageView = albedoTexture->getVkImageView();
+					albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
-			// Binding 5
-			const Texture* roughnessTexture =
-				this->resourceManager->getTexture(material.roughnessTextureId);
-			roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
-			roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
+					// Binding 5
+					const Texture* roughnessTexture =
+						this->resourceManager->getTexture(material.roughnessTextureId);
+					roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
+					roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
 
-			// Binding 6
-			const Texture* metallicTexture =
-				this->resourceManager->getTexture(material.metallicTextureId);
-			metallicImageInfo.imageView = metallicTexture->getVkImageView();
-			metallicImageInfo.sampler = metallicTexture->getVkSampler();
+					// Binding 6
+					const Texture* metallicTexture =
+						this->resourceManager->getTexture(material.metallicTextureId);
+					metallicImageInfo.imageView = metallicTexture->getVkImageView();
+					metallicImageInfo.sampler = metallicTexture->getVkSampler();
 
-			// Push descriptor set update
-			writeDescriptorSets[4].pImageInfo = &albedoImageInfo;
-			writeDescriptorSets[5].pImageInfo = &roughnessImageInfo;
-			writeDescriptorSets[6].pImageInfo = &metallicImageInfo;
-			commandBuffer.pushDescriptorSet(
-				this->gfxResManager.getGraphicsPipelineLayout(),
-				0,
-				writeDescriptorSets.size(),
-				writeDescriptorSets.data()
-			);
+					// Push descriptor set update
+					writeDescriptorSets[4].pImageInfo = &albedoImageInfo;
+					writeDescriptorSets[5].pImageInfo = &roughnessImageInfo;
+					writeDescriptorSets[6].pImageInfo = &metallicImageInfo;
+					commandBuffer.pushDescriptorSet(
+						this->gfxResManager.getGraphicsPipelineLayout(),
+						0,
+						uint32_t(writeDescriptorSets.size()),
+						writeDescriptorSets.data()
+					);
 
-			// Push constant data
-			PCD pushConstantData{};
-			pushConstantData.modelMat = transform.modelMat;
-			pushConstantData.materialProperties.x = material.roughness;
-			pushConstantData.materialProperties.y = material.metallic;
-			commandBuffer.pushConstant(
-				this->gfxResManager.getGraphicsPipelineLayout(),
-				&pushConstantData
-			);
+					// Push constant data
+					PCD pushConstantData{};
+					pushConstantData.modelMat = transform.modelMat;
+					pushConstantData.materialProperties.x = material.roughness;
+					pushConstantData.materialProperties.y = material.metallic;
+					commandBuffer.pushConstant(
+						this->gfxResManager.getGraphicsPipelineLayout(),
+						&pushConstantData
+					);
 
-			// Render mesh
-			const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
+					// Render mesh
+					const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
 
-			// Record binding vertex/index buffer
-			commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-			commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
+					// Record binding vertex/index buffer
+					commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
+					commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer());
 
-			// Record draw
-			commandBuffer.drawIndexed(currentMesh.getNumIndices());
+					// Record draw
+					commandBuffer.drawIndexed(currentMesh.getNumIndices());
 				}
 			);
 		}
@@ -863,7 +863,7 @@ void Renderer::recordCommandBuffer(
 		commandBuffer.pushDescriptorSet(
 			this->postProcessPipelineLayout,
 			0,
-			computeWriteDescriptorSets.size(),
+			uint32_t(computeWriteDescriptorSets.size()),
 			computeWriteDescriptorSets.data()
 		);
 

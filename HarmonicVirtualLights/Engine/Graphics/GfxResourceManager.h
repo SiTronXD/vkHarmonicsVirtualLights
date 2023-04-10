@@ -16,6 +16,8 @@ private:
 	const GfxAllocContext* gfxAllocContext;
 
 public:
+	GfxResourceManager();
+
 	void init(const GfxAllocContext& gfxAllocContext);
 	void cleanup();
 

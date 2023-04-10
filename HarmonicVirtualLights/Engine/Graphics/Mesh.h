@@ -12,7 +12,7 @@ private:
 	VertexBuffer vertexBuffer;
 	IndexBuffer indexBuffer;
 
-	size_t numIndices;
+	uint32_t numIndices;
 
 public:
 	Mesh();
@@ -27,5 +27,5 @@ public:
 	inline const VertexBuffer& getVertexBuffer() const { return this->vertexBuffer; }
 	inline const IndexBuffer& getIndexBuffer() const { return this->indexBuffer; }
 
-	inline const size_t& getNumIndices() const { return this->numIndices; }
+	inline uint32_t getNumIndices() const { return this->numIndices; }
 };
