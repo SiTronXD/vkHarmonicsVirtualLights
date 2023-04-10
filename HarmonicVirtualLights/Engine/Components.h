@@ -21,6 +21,8 @@ struct Material
 	float roughness = 1.0f;
 	float metallic = 1.0f;
 
+	bool castShadows = true;
+
 	uint32_t albedoTextureId = ~0u;
 	uint32_t roughnessTextureId = ~0u;
 	uint32_t metallicTextureId = ~0u;

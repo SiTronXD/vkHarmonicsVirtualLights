@@ -72,6 +72,9 @@
     <CustomBuild>
       <VerifyInputsAndOutputsExist>false</VerifyInputsAndOutputsExist>
     </CustomBuild>
+    <PostBuildEvent>
+      <Command>xcopy $(ProjectDir)Resources $(Outdir)Resources /Y /I /E</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -106,6 +109,9 @@
     <CustomBuild>
       <VerifyInputsAndOutputsExist>false</VerifyInputsAndOutputsExist>
     </CustomBuild>
+    <PostBuildEvent>
+      <Command>xcopy $(ProjectDir)Resources $(Outdir)Resources /Y /I /E</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Application\Input.cpp" />

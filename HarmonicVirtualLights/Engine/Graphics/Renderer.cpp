@@ -277,6 +277,7 @@ void Renderer::draw(Scene& scene)
 	}
 
 	this->updateUniformBuffer(scene.getCamera());
+	this->rsm.update();
 
 	// Only reset the fence if we are submitting work
 	this->inFlightFences.reset(GfxState::getFrameIndex());
@@ -505,48 +506,63 @@ void Renderer::recordCommandBuffer(
 				const MeshComponent& meshComp,
 				const Transform& transform)
 				{
-					// Switch pipeline if necessary
-					if (currentPipelineIndex != material.rsmPipelineIndex)
+					if (material.castShadows)
 					{
-						commandBuffer.bindPipeline(
-							this->gfxResManager.getPipeline(material.rsmPipelineIndex)
+						// Switch pipeline if necessary
+						if (currentPipelineIndex != material.rsmPipelineIndex)
+						{
+							commandBuffer.bindPipeline(
+								this->gfxResManager.getPipeline(material.rsmPipelineIndex)
+							);
+
+							currentPipelineIndex = material.rsmPipelineIndex;
+							numPipelineSwitches++;
+						}
+
+						// Push descriptor set update
+						commandBuffer.pushDescriptorSet(
+							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
+							0,
+							writeDescriptorSets.size(),
+							writeDescriptorSets.data()
 						);
 
-						currentPipelineIndex = material.rsmPipelineIndex;
-						numPipelineSwitches++;
+						// Push constant data
+						PCD pushConstantData{};
+						pushConstantData.modelMat = transform.modelMat;
+						commandBuffer.pushConstant(
+							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
+							&pushConstantData
+						);
+
+						// Render mesh
+						const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
+
+						// Record binding vertex/index buffer
+						commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
+						commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
+
+						// Record draw
+						commandBuffer.drawIndexed(currentMesh.getNumIndices());
 					}
-
-					// Push descriptor set update
-					commandBuffer.pushDescriptorSet(
-						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
-						0,
-						writeDescriptorSets.size(),
-						writeDescriptorSets.data()
-					);
-
-					// Push constant data
-					PCD pushConstantData{};
-					pushConstantData.modelMat = transform.modelMat;
-					commandBuffer.pushConstant(
-						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
-						&pushConstantData
-					);
-
-					// Render mesh
-					const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-
-					// Record binding vertex/index buffer
-					commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-					commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer(), GfxState::getFrameIndex());
-
-					// Record draw
-					commandBuffer.drawIndexed(currentMesh.getNumIndices());
 				}
 			);
 		}
 
 		// End rendering
 		commandBuffer.endRendering();
+
+		// Rsm depth transition
+		commandBuffer.memoryBarrier(
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			this->rsm.getDepthTexture().getVkImage(),
+			VK_IMAGE_ASPECT_DEPTH_BIT
+		);
 	}
 
 	// Dynamic viewport
@@ -661,6 +677,13 @@ void Renderer::recordCommandBuffer(
 			prefilteredImageInfo.imageView = prefilteredEnvMap->getVkImageView();
 			prefilteredImageInfo.sampler = prefilteredEnvMap->getVkSampler();
 
+			// Binding 3
+			const Texture& rsmDepthTex = this->rsm.getDepthTexture();
+			VkDescriptorImageInfo rsmDepthImageInfo{};
+			rsmDepthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			rsmDepthImageInfo.imageView = rsmDepthTex.getVkImageView();
+			rsmDepthImageInfo.sampler = rsmDepthTex.getVkSampler();
+
 			VkDescriptorImageInfo albedoImageInfo{};
 			albedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			VkDescriptorImageInfo roughnessImageInfo{};
@@ -668,15 +691,17 @@ void Renderer::recordCommandBuffer(
 			VkDescriptorImageInfo metallicImageInfo{};
 			metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			std::array<VkWriteDescriptorSet, 6> writeDescriptorSets
+			std::array<VkWriteDescriptorSet, 7> writeDescriptorSets
 			{
 				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
 				DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &brdfImageInfo),
 				DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &prefilteredImageInfo),
 
-				DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
+
 				DescriptorSet::writeImage(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
+				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
 			};
 
 			// Loop through entities with mesh components
@@ -697,28 +722,28 @@ void Renderer::recordCommandBuffer(
 						numPipelineSwitches++;
 					}
 
-			// Binding 3
+			// Binding 4
 			const Texture* albedoTexture =
 				this->resourceManager->getTexture(material.albedoTextureId);
 			albedoImageInfo.imageView = albedoTexture->getVkImageView();
 			albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
-			// Binding 4
+			// Binding 5
 			const Texture* roughnessTexture =
 				this->resourceManager->getTexture(material.roughnessTextureId);
 			roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
 			roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
 
-			// Binding 5
+			// Binding 6
 			const Texture* metallicTexture =
 				this->resourceManager->getTexture(material.metallicTextureId);
 			metallicImageInfo.imageView = metallicTexture->getVkImageView();
 			metallicImageInfo.sampler = metallicTexture->getVkSampler();
 
 			// Push descriptor set update
-			writeDescriptorSets[3].pImageInfo = &albedoImageInfo;
-			writeDescriptorSets[4].pImageInfo = &roughnessImageInfo;
-			writeDescriptorSets[5].pImageInfo = &metallicImageInfo;
+			writeDescriptorSets[4].pImageInfo = &albedoImageInfo;
+			writeDescriptorSets[5].pImageInfo = &roughnessImageInfo;
+			writeDescriptorSets[6].pImageInfo = &metallicImageInfo;
 			commandBuffer.pushDescriptorSet(
 				this->gfxResManager.getGraphicsPipelineLayout(),
 				0,
@@ -928,6 +953,7 @@ void Renderer::initForScene(Scene& scene)
 		std::strcpy(skyboxMaterial.vertexShader, "Skybox.vert.spv");
 		std::strcpy(skyboxMaterial.fragmentShader, "Skybox.frag.spv");
 		skyboxMaterial.albedoTextureId = this->skyboxTextureIndex;
+		skyboxMaterial.castShadows = false;
 
 		// Mesh
 		MeshComponent skyboxMesh{};

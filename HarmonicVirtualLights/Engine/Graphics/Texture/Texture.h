@@ -11,6 +11,7 @@ class TextureData;
 
 struct SamplerSettings
 {
+	VkFilter filter = VK_FILTER_LINEAR;
 	VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 };
 

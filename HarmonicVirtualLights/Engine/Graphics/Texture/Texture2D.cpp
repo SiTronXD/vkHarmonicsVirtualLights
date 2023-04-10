@@ -130,7 +130,8 @@ bool Texture2D::createFromFile(
 
 bool Texture2D::createAsDepthTexture(
 	const GfxAllocContext& gfxAllocContext,
-	uint32_t width, uint32_t height)
+	uint32_t width, uint32_t height,
+	VkImageUsageFlagBits extraUsageFlags)
 {
 	this->gfxAllocContext = &gfxAllocContext;
 
@@ -146,7 +147,7 @@ bool Texture2D::createAsDepthTexture(
 		this->format,
 		0,
 		VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | extraUsageFlags,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 	);
 
@@ -169,6 +170,26 @@ bool Texture2D::createAsDepthTexture(
 	);
 
 	return true;
+}
+
+bool Texture2D::createAsDepthSampledTexture(
+	const GfxAllocContext& gfxAllocContext, 
+	uint32_t width, 
+	uint32_t height)
+{
+	bool createdDepthTexture = this->createAsDepthTexture(
+		gfxAllocContext,
+		width,
+		height,
+		VK_IMAGE_USAGE_SAMPLED_BIT
+	);
+
+	SamplerSettings samplerSettings{};
+	samplerSettings.filter = VK_FILTER_NEAREST;
+	samplerSettings.addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	bool createdSampler = this->createTextureSampler(samplerSettings);
+
+	return createdDepthTexture && createdSampler;
 }
 
 bool Texture2D::createAsRenderableTexture(

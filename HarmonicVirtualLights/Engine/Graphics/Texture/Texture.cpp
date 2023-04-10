@@ -188,14 +188,14 @@ bool Texture::createTextureSampler(const SamplerSettings& samplerSettings)
 {
 	// Sampler create info
 	VkSamplerCreateInfo samplerInfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	samplerInfo.magFilter = VK_FILTER_LINEAR;
-	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.magFilter = samplerSettings.filter;
+	samplerInfo.minFilter = samplerSettings.filter;
 	samplerInfo.addressModeU = samplerSettings.addressMode;
 	samplerInfo.addressModeV = samplerSettings.addressMode;
 	samplerInfo.addressModeW = samplerSettings.addressMode;
 	samplerInfo.anisotropyEnable = VK_TRUE;
 	samplerInfo.maxAnisotropy = GpuProperties::getMaxAnisotropy();
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;

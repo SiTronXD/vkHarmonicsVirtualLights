@@ -6,9 +6,11 @@
 layout(set = 0, binding = 1) uniform sampler2D brdfLutTex;
 layout(set = 0, binding = 2) uniform samplerCube prefilterMap;
 
-layout(set = 0, binding = 3) uniform sampler2D albedoTex;
-layout(set = 0, binding = 4) uniform sampler2D roughnessTex;
-layout(set = 0, binding = 5) uniform sampler2D metallicTex;
+layout(set = 0, binding = 3) uniform sampler2D rsmDepthTex;
+
+layout(set = 0, binding = 4) uniform sampler2D albedoTex;
+layout(set = 0, binding = 5) uniform sampler2D roughnessTex;
+layout(set = 0, binding = 6) uniform sampler2D metallicTex;
 
 layout(location = 0) in vec3 fragNormal;
 layout(location = 1) in vec3 fragWorldPos;

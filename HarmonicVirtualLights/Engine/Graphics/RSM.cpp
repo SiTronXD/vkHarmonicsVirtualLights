@@ -42,7 +42,7 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		VK_FORMAT_R32G32B32A32_SFLOAT,
 		(VkImageUsageFlagBits)0
 	);*/
-	this->depthTexture.createAsDepthTexture(
+	this->depthTexture.createAsDepthSampledTexture(
 		gfxAllocContext,
 		this->width,
 		this->height

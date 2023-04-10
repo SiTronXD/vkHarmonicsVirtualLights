@@ -13,7 +13,8 @@ private:
 
 public:
 	bool createFromFile(const GfxAllocContext& gfxAllocContext, const std::string& filePath);
-	bool createAsDepthTexture(const GfxAllocContext& gfxAllocContext, uint32_t width, uint32_t height);
+	bool createAsDepthTexture(const GfxAllocContext& gfxAllocContext, uint32_t width, uint32_t height, VkImageUsageFlagBits extraUsageFlags = (VkImageUsageFlagBits)0);
+	bool createAsDepthSampledTexture(const GfxAllocContext& gfxAllocContext, uint32_t width, uint32_t height);
 	bool createAsRenderableTexture(
 		const GfxAllocContext& gfxAllocContext,
 		uint32_t width,
