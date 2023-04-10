@@ -393,7 +393,7 @@ void Renderer::recordCommandBuffer(
 
 	// ---------- Render scene to RSM ----------
 	{
-		VkExtent2D rsmExtent{ this->rsm.getWidth(), this->rsm.getHeight() };
+		VkExtent2D rsmExtent{ this->rsm.getSize(), this->rsm.getSize() };
 
 		// Viewport
 		float swapchainHeight = (float) rsmExtent.height;
@@ -500,7 +500,7 @@ void Renderer::recordCommandBuffer(
 		depthAttachment.imageView = this->rsm.getDepthTexture().getVkImageView();
 		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		depthAttachment.clearValue = clearValues[3];
 
 		// Begin rendering
@@ -687,6 +687,11 @@ void Renderer::recordCommandBuffer(
 			uboInfo.range = sizeof(CamUBO);
 
 			// Binding 1
+			VkDescriptorBufferInfo lightCamUboInfo{};
+			lightCamUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
+			lightCamUboInfo.range = sizeof(CamUBO);
+
+			// Binding 2
 			const Texture* brdfLutTexture =
 				this->resourceManager->getTexture(this->brdfLutTextureIndex);
 			VkDescriptorImageInfo brdfImageInfo{};
@@ -694,7 +699,7 @@ void Renderer::recordCommandBuffer(
 			brdfImageInfo.imageView = brdfLutTexture->getVkImageView();
 			brdfImageInfo.sampler = brdfLutTexture->getVkSampler();
 
-			// Binding 2
+			// Binding 3
 			const Texture* prefilteredEnvMap =
 				this->resourceManager->getTexture(
 					static_cast<TextureCube*>(
@@ -706,7 +711,7 @@ void Renderer::recordCommandBuffer(
 			prefilteredImageInfo.imageView = prefilteredEnvMap->getVkImageView();
 			prefilteredImageInfo.sampler = prefilteredEnvMap->getVkSampler();
 
-			// Binding 3
+			// Binding 4
 			const Texture& rsmDepthTex = this->rsm.getDepthTexture();
 			VkDescriptorImageInfo rsmDepthImageInfo{};
 			rsmDepthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -720,17 +725,19 @@ void Renderer::recordCommandBuffer(
 			VkDescriptorImageInfo metallicImageInfo{};
 			metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			std::array<VkWriteDescriptorSet, 7> writeDescriptorSets
+			std::array<VkWriteDescriptorSet, 8> writeDescriptorSets
 			{
 				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
-				DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &brdfImageInfo),
-				DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &prefilteredImageInfo),
+				DescriptorSet::writeBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightCamUboInfo),
 
-				DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
+				DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &brdfImageInfo),
+				DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &prefilteredImageInfo),
 
-				DescriptorSet::writeImage(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
+
 				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-				DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
+				DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
 			};
 
 			// Loop through entities with mesh components
@@ -751,28 +758,28 @@ void Renderer::recordCommandBuffer(
 						numPipelineSwitches++;
 					}
 
-					// Binding 4
+					// Binding 5
 					const Texture* albedoTexture =
 						this->resourceManager->getTexture(material.albedoTextureId);
 					albedoImageInfo.imageView = albedoTexture->getVkImageView();
 					albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
-					// Binding 5
+					// Binding 6
 					const Texture* roughnessTexture =
 						this->resourceManager->getTexture(material.roughnessTextureId);
 					roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
 					roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
 
-					// Binding 6
+					// Binding 7
 					const Texture* metallicTexture =
 						this->resourceManager->getTexture(material.metallicTextureId);
 					metallicImageInfo.imageView = metallicTexture->getVkImageView();
 					metallicImageInfo.sampler = metallicTexture->getVkSampler();
 
 					// Push descriptor set update
-					writeDescriptorSets[4].pImageInfo = &albedoImageInfo;
-					writeDescriptorSets[5].pImageInfo = &roughnessImageInfo;
-					writeDescriptorSets[6].pImageInfo = &metallicImageInfo;
+					writeDescriptorSets[5].pImageInfo = &albedoImageInfo;
+					writeDescriptorSets[6].pImageInfo = &roughnessImageInfo;
+					writeDescriptorSets[7].pImageInfo = &metallicImageInfo;
 					commandBuffer.pushDescriptorSet(
 						this->gfxResManager.getGraphicsPipelineLayout(),
 						0,

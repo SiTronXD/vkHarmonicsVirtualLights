@@ -195,7 +195,7 @@ bool Texture::createTextureSampler(const SamplerSettings& samplerSettings)
 	samplerInfo.addressModeW = samplerSettings.addressMode;
 	samplerInfo.anisotropyEnable = VK_TRUE;
 	samplerInfo.maxAnisotropy = GpuProperties::getMaxAnisotropy();
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+	samplerInfo.borderColor = samplerSettings.borderColor;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;

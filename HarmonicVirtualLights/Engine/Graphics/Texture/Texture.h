@@ -13,6 +13,7 @@ struct SamplerSettings
 {
 	VkFilter filter = VK_FILTER_LINEAR;
 	VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	VkBorderColor borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 };
 
 class Texture

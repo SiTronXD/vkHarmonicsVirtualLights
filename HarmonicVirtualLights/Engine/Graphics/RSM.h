@@ -19,8 +19,7 @@ private:
 
 	glm::vec3 position;
 
-	uint32_t width;
-	uint32_t height;
+	uint32_t shadowMapSize;
 
 public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -33,8 +32,7 @@ public:
 	void update();
 	void cleanup();
 
-	inline uint32_t getWidth() const { return this->width; }
-	inline uint32_t getHeight() const { return this->height; }
+	inline uint32_t getSize() const { return this->shadowMapSize; }
 
 	inline const Texture2D& getPositionTexture() const { return this->positionTexture; }
 	inline const Texture2D& getNormalTexture() const { return this->normalTexture; }

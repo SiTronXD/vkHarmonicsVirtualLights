@@ -1,16 +1,23 @@
 #version 450
 
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
+#define SHADOW_BIAS 0.003f
 #define PI 3.1415926535897932384626433832795
 
-layout(set = 0, binding = 1) uniform sampler2D brdfLutTex;
-layout(set = 0, binding = 2) uniform samplerCube prefilterMap;
+layout(binding = 1) uniform LightCamUBO 
+{
+	mat4 vp;
+	vec4 pos; // (x, y, z, shadow map size)
+} lightCamUbo;
 
-layout(set = 0, binding = 3) uniform sampler2D rsmDepthTex;
+layout(set = 0, binding = 2) uniform sampler2D brdfLutTex;
+layout(set = 0, binding = 3) uniform samplerCube prefilterMap;
 
-layout(set = 0, binding = 4) uniform sampler2D albedoTex;
-layout(set = 0, binding = 5) uniform sampler2D roughnessTex;
-layout(set = 0, binding = 6) uniform sampler2D metallicTex;
+layout(set = 0, binding = 4) uniform sampler2D rsmDepthTex;
+
+layout(set = 0, binding = 5) uniform sampler2D albedoTex;
+layout(set = 0, binding = 6) uniform sampler2D roughnessTex;
+layout(set = 0, binding = 7) uniform sampler2D metallicTex;
 
 layout(location = 0) in vec3 fragNormal;
 layout(location = 1) in vec3 fragWorldPos;
@@ -121,17 +128,41 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 	return F0 + (max(vec3(1.0f - roughness), F0) - F0) * pow(clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
 }
 
+float getShadowFactor()
+{
+	// Transform to light's coordinate space
+	vec4 lightWorldPos = lightCamUbo.vp * vec4(fragWorldPos, 1.0f);
+	lightWorldPos /= lightWorldPos.w;
+	lightWorldPos.y = -lightWorldPos.y;
+	lightWorldPos.xy = lightWorldPos.xy * 0.5f + vec2(0.5f);
+
+	// Sample depth texture
+	const float smSize = lightCamUbo.pos.w;
+	const float oneOverSize = 1.0f / smSize;
+	vec2 smPos = lightWorldPos.xy * smSize;
+	vec2 fractPos = fract(smPos);
+	vec2 corner0 = (floor(smPos) + vec2(0.5f)) / smSize;
+	float lightDepth0 = texture(rsmDepthTex, corner0).r;
+	float lightDepth1 = texture(rsmDepthTex, corner0 + vec2(oneOverSize, 0.0f)).r;
+	float lightDepth2 = texture(rsmDepthTex, corner0 + vec2(0.0f, oneOverSize)).r;
+	float lightDepth3 = texture(rsmDepthTex, corner0 + vec2(oneOverSize, oneOverSize)).r;
+	float result0 = lightWorldPos.z - SHADOW_BIAS <= lightDepth0 ? 1.0f : 0.0f;
+	float result1 = lightWorldPos.z - SHADOW_BIAS <= lightDepth1 ? 1.0f : 0.0f;
+	float result2 = lightWorldPos.z - SHADOW_BIAS <= lightDepth2 ? 1.0f : 0.0f;
+	float result3 = lightWorldPos.z - SHADOW_BIAS <= lightDepth3 ? 1.0f : 0.0f;
+
+	float horizResult0 = mix(result0, result1, fractPos.x);
+	float horizResult1 = mix(result2, result3, fractPos.x);
+	float finalResult = mix(horizResult0, horizResult1, fractPos.y);
+
+	return finalResult;
+}
+
 void main()
 {
 	// Can be replaced by a buffer with multiple lights
-	const uint numLights = 4;
-	const vec3 lightPos[numLights] = 
-	{
-		vec3( 2.0f,  2.0f, 3.0f),
-		vec3( 2.0f, -2.0f, 3.0f),
-		vec3(-2.0f,  2.0f, 3.0f),
-		vec3(-2.0f, -2.0f, 3.0f)
-	};
+	const uint numLights = 1;
+	const vec3 lightPos = lightCamUbo.pos.xyz;
 	const vec3 lightColor = vec3(1.0f, 1.0f, 1.0f) * 10.0f;
 
 	const float ao = 1.0f;
@@ -149,7 +180,7 @@ void main()
 	vec3 Lo = vec3(0.0f);
 	for(uint i = 0; i < numLights; ++i)
 	{
-		vec3 toLight = lightPos[i] - fragWorldPos;
+		vec3 toLight = lightPos - fragWorldPos;
 		vec3 L = normalize(toLight);
 		vec3 H = normalize(V + L);
 		float attenuation = 1.0f / dot(toLight, toLight);
@@ -173,7 +204,7 @@ void main()
 		vec3 specular = numerator / denominator; // (already contains kS as F)
 
 		// Add to outgoing radiance Lo
-		Lo += (diffuse + specular) * radiance * NdotL;
+		Lo += (diffuse + specular) * radiance * NdotL * getShadowFactor();
 	}
 
 	vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0f), F0, roughness);
@@ -192,6 +223,9 @@ void main()
 	
 	// Add to ambient
 	vec3 ambient = (indirectKd * diffuse + specular) * ao;
+
+	// No IBL
+	ambient = vec3(0.0f);
 
 	vec3 color = ambient + Lo;
 	outColor = vec4(color, 1.0f);

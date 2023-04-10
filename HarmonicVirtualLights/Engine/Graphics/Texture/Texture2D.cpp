@@ -187,6 +187,7 @@ bool Texture2D::createAsDepthSampledTexture(
 	SamplerSettings samplerSettings{};
 	samplerSettings.filter = VK_FILTER_NEAREST;
 	samplerSettings.addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerSettings.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	bool createdSampler = this->createTextureSampler(samplerSettings);
 
 	return createdDepthTexture && createdSampler;
