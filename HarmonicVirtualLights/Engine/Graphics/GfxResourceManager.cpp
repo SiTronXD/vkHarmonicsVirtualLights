@@ -64,7 +64,10 @@ uint32_t GfxResourceManager::getMaterialRsmPipelineIndex(const Material& materia
 	newPipeline.createGraphicsPipeline(
 		*this->gfxAllocContext->device,
 		this->graphicsPipelineLayout,
-		RSM::POSITION_FORMAT,
+		{ 
+			RSM::POSITION_FORMAT,
+			RSM::NORMAL_FORMAT
+		},
 		Texture::getDepthBufferFormat(),
 		"Resources/Shaders/Rsm.vert.spv",
 		"Resources/Shaders/Rsm.frag.spv"
@@ -92,7 +95,7 @@ uint32_t GfxResourceManager::getMaterialPipelineIndex(const Material& material)
 	newPipeline.createGraphicsPipeline(
 		*this->gfxAllocContext->device, 
 		this->graphicsPipelineLayout,
-		Swapchain::HDR_FORMAT,
+		{ Swapchain::HDR_FORMAT },
 		Texture::getDepthBufferFormat(),
 		"Resources/Shaders/" + std::string(material.vertexShader),
 		"Resources/Shaders/" + std::string(material.fragmentShader)

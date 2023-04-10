@@ -36,8 +36,8 @@ void Pipeline::createPipelineCache(const Device& device)
 void Pipeline::createGraphicsPipeline(
 	const Device& device,
 	PipelineLayout& pipelineLayout,
-	const VkFormat& colorFormat,
-	const VkFormat& depthFormat,
+	const std::vector<VkFormat>& colorFormats,
+	VkFormat depthFormat,
 	const std::string& vertexShader,
 	const std::string& fragmentShader)
 {
@@ -57,16 +57,14 @@ void Pipeline::createGraphicsPipeline(
 	auto bindingDescription = Vertex::getBindingDescription();
 	auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 	// Input assembly
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly{ VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
@@ -76,21 +74,18 @@ void Pipeline::createGraphicsPipeline(
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_SCISSOR
 	};
-	VkPipelineDynamicStateCreateInfo dynamicState{};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	VkPipelineDynamicStateCreateInfo dynamicState{ VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
 	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 	dynamicState.pDynamicStates = dynamicStates.data();
 
 	// Viewport state 
 	// (Actual viewport/scissor is set at drawing time)
-	VkPipelineViewportStateCreateInfo viewportState{};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	VkPipelineViewportStateCreateInfo viewportState{ VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
 	viewportState.viewportCount = 1;
 	viewportState.scissorCount = 1;
 
 	// Rasterizer
-	VkPipelineRasterizationStateCreateInfo rasterizer{};
-	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	VkPipelineRasterizationStateCreateInfo rasterizer{ VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
@@ -103,8 +98,7 @@ void Pipeline::createGraphicsPipeline(
 	rasterizer.depthBiasSlopeFactor = 0.0f;
 
 	// Multisampling
-	VkPipelineMultisampleStateCreateInfo multisampling{};
-	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	VkPipelineMultisampleStateCreateInfo multisampling{ VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
 	multisampling.sampleShadingEnable = VK_FALSE;
 	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 	multisampling.minSampleShading = 1.0f;
@@ -127,21 +121,22 @@ void Pipeline::createGraphicsPipeline(
 	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
+	// Make x number of copies of colorBlendAttachment
+	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(colorFormats.size(), colorBlendAttachment);
+
 	// Global color blend
-	VkPipelineColorBlendStateCreateInfo colorBlending{};
-	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	VkPipelineColorBlendStateCreateInfo colorBlending{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
+	colorBlending.attachmentCount = uint32_t(colorBlendAttachments.size());
+	colorBlending.pAttachments = colorBlendAttachments.data();
 	colorBlending.blendConstants[0] = 0.0f;
 	colorBlending.blendConstants[1] = 0.0f;
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
 	// Depth/stencil state
-	VkPipelineDepthStencilStateCreateInfo depthStencilState{};
-	depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	VkPipelineDepthStencilStateCreateInfo depthStencilState{ VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 
 	// Depth testing
 	depthStencilState.depthTestEnable = VK_TRUE;
@@ -163,8 +158,7 @@ void Pipeline::createGraphicsPipeline(
 	depthStencilState.back = depthStencilState.front;
 
 	// Graphics pipeline
-	VkGraphicsPipelineCreateInfo pipelineInfo{};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 	pipelineInfo.stageCount = 2;
 	pipelineInfo.pStages = shaderStages;
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
@@ -183,9 +177,8 @@ void Pipeline::createGraphicsPipeline(
 
 	// Rendering info (for dynamic rendering)
 	VkPipelineRenderingCreateInfo renderingInfo = { VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
-	VkFormat allColorFormats[] { colorFormat };
-	renderingInfo.colorAttachmentCount = 1;
-	renderingInfo.pColorAttachmentFormats = allColorFormats;
+	renderingInfo.colorAttachmentCount = uint32_t(colorFormats.size());
+	renderingInfo.pColorAttachmentFormats = colorFormats.data();
 	renderingInfo.depthAttachmentFormat = depthFormat;
 	renderingInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
 	pipelineInfo.pNext = &renderingInfo;
@@ -238,8 +231,8 @@ void Pipeline::createComputePipeline(
 void Pipeline::createImguiPipeline(
 	const Device& device,
 	PipelineLayout& imguiPipelineLayout,
-	const VkFormat& colorFormat,
-	const VkFormat& depthFormat)
+	VkFormat colorFormat,
+	VkFormat depthFormat)
 {
 	this->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	this->device = &device;

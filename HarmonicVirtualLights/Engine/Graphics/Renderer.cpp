@@ -413,7 +413,7 @@ void Renderer::recordCommandBuffer(
 		commandBuffer.setScissor(rsmScissor);
 
 		// Transition layouts for render targets
-		std::array<VkImageMemoryBarrier2, 2> memoryBarriers =
+		std::array<VkImageMemoryBarrier2, 3> memoryBarriers =
 		{
 			// Position
 			PipelineBarrier::imageMemoryBarrier2(
@@ -428,7 +428,7 @@ void Renderer::recordCommandBuffer(
 			),
 
 			// Normal
-			/*PipelineBarrier::imageMemoryBarrier2(
+			PipelineBarrier::imageMemoryBarrier2(
 				VK_ACCESS_NONE,
 				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -437,7 +437,7 @@ void Renderer::recordCommandBuffer(
 				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 				this->rsm.getNormalTexture().getVkImage(),
 				VK_IMAGE_ASPECT_COLOR_BIT
-			),*/
+			),
 
 			// Depth
 			PipelineBarrier::imageMemoryBarrier2(
@@ -454,17 +454,26 @@ void Renderer::recordCommandBuffer(
 		commandBuffer.memoryBarrier(memoryBarriers.data(), uint32_t(memoryBarriers.size()));
 
 		// Clear values for color and depth
-		std::array<VkClearValue, 2> clearValues{};
+		std::array<VkClearValue, 3> clearValues{};
 		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[1].color = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+		clearValues[2].depthStencil = { 1.0f, 0 };
 
-		// Color attachment
-		VkRenderingAttachmentInfo colorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-		colorAttachment.imageView = this->rsm.getPositionTexture().getVkImageView();
-		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.clearValue = clearValues[0];
+		// Color attachments
+		std::array<VkRenderingAttachmentInfo, 2> colorAttachments{};
+		colorAttachments[0].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colorAttachments[0].imageView = this->rsm.getPositionTexture().getVkImageView();
+		colorAttachments[0].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachments[0].clearValue = clearValues[0];
+
+		colorAttachments[1].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colorAttachments[1].imageView = this->rsm.getNormalTexture().getVkImageView();
+		colorAttachments[1].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachments[1].clearValue = clearValues[1];
 
 		// Depth attachment
 		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
@@ -472,14 +481,14 @@ void Renderer::recordCommandBuffer(
 		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.clearValue = clearValues[1];
+		depthAttachment.clearValue = clearValues[2];
 
 		// Begin rendering
 		VkRenderingInfo renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
 		renderingInfo.renderArea = rsmScissor;
 		renderingInfo.layerCount = 1;
-		renderingInfo.colorAttachmentCount = 1;
-		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.colorAttachmentCount = uint32_t(colorAttachments.size());
+		renderingInfo.pColorAttachments = colorAttachments.data();
 		renderingInfo.pDepthAttachment = &depthAttachment;
 		commandBuffer.beginRendering(renderingInfo);
 

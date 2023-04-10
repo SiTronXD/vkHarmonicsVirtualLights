@@ -21,8 +21,8 @@ public:
 	void createGraphicsPipeline(
 		const Device& device,
 		PipelineLayout& pipelineLayout,
-		const VkFormat& colorFormat,
-		const VkFormat& depthFormat,
+		const std::vector<VkFormat>& colorFormats,
+		VkFormat depthFormat,
 		const std::string& vertexShader,
 		const std::string& fragmentShader);
 	void createComputePipeline(
@@ -32,8 +32,8 @@ public:
 	void createImguiPipeline(
 		const Device& device,
 		PipelineLayout& imguiPipelineLayout,
-		const VkFormat& colorFormat,
-		const VkFormat& depthFormat);
+		VkFormat colorFormat,
+		VkFormat depthFormat);
 
 	void cleanup();
 	void cleanupPipelineCache();

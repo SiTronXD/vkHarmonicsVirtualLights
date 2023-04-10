@@ -17,6 +17,7 @@ layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoord;
 
 layout(location = 0) out vec3 fragWorldPos;
+layout(location = 1) out vec3 fragNormal;
 
 void main()
 {
@@ -24,4 +25,5 @@ void main()
 
 	gl_Position = ubo.vp * worldPos;
 	fragWorldPos = worldPos.xyz;
+	fragNormal = inNormal;
 }
