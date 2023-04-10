@@ -413,7 +413,7 @@ void Renderer::recordCommandBuffer(
 		commandBuffer.setScissor(rsmScissor);
 
 		// Transition layouts for render targets
-		std::array<VkImageMemoryBarrier2, 3> memoryBarriers =
+		std::array<VkImageMemoryBarrier2, 4> memoryBarriers =
 		{
 			// Position
 			PipelineBarrier::imageMemoryBarrier2(
@@ -439,6 +439,18 @@ void Renderer::recordCommandBuffer(
 				VK_IMAGE_ASPECT_COLOR_BIT
 			),
 
+			// Brdf index
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_NONE,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				this->rsm.getBrdfIndexTexture().getVkImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT
+			),
+
 			// Depth
 			PipelineBarrier::imageMemoryBarrier2(
 				VK_ACCESS_NONE,
@@ -454,13 +466,14 @@ void Renderer::recordCommandBuffer(
 		commandBuffer.memoryBarrier(memoryBarriers.data(), uint32_t(memoryBarriers.size()));
 
 		// Clear values for color and depth
-		std::array<VkClearValue, 3> clearValues{};
+		std::array<VkClearValue, 4> clearValues{};
 		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 		clearValues[1].color = { { 1.0f, 1.0f, 1.0f, 1.0f } };
-		clearValues[2].depthStencil = { 1.0f, 0 };
+		clearValues[2].color.uint32[0] = 0u; clearValues[2].color.uint32[1] = 0u; clearValues[2].color.uint32[2] = 0u; clearValues[2].color.uint32[3] = 0u;
+		clearValues[3].depthStencil = { 1.0f, 0 };
 
 		// Color attachments
-		std::array<VkRenderingAttachmentInfo, 2> colorAttachments{};
+		std::array<VkRenderingAttachmentInfo, 3> colorAttachments{};
 		colorAttachments[0].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		colorAttachments[0].imageView = this->rsm.getPositionTexture().getVkImageView();
 		colorAttachments[0].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -475,13 +488,20 @@ void Renderer::recordCommandBuffer(
 		colorAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachments[1].clearValue = clearValues[1];
 
+		colorAttachments[2].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colorAttachments[2].imageView = this->rsm.getBrdfIndexTexture().getVkImageView();
+		colorAttachments[2].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachments[2].clearValue = clearValues[2];
+
 		// Depth attachment
 		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
 		depthAttachment.imageView = this->rsm.getDepthTexture().getVkImageView();
 		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.clearValue = clearValues[2];
+		depthAttachment.clearValue = clearValues[3];
 
 		// Begin rendering
 		VkRenderingInfo renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };

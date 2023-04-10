@@ -66,7 +66,8 @@ uint32_t GfxResourceManager::getMaterialRsmPipelineIndex(const Material& materia
 		this->graphicsPipelineLayout,
 		{ 
 			RSM::POSITION_FORMAT,
-			RSM::NORMAL_FORMAT
+			RSM::NORMAL_FORMAT,
+			RSM::BRDF_INDEX_FORMAT
 		},
 		Texture::getDepthBufferFormat(),
 		"Resources/Shaders/Rsm.vert.spv",

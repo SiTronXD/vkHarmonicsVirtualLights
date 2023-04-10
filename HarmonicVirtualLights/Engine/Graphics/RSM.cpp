@@ -18,24 +18,21 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		gfxAllocContext, 
 		this->width,
 		this->height,
-		RSM::POSITION_FORMAT,
-		(VkImageUsageFlagBits) 0
+		RSM::POSITION_FORMAT
 	);
 	this->normalTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
 		this->width,
 		this->height,
-		RSM::NORMAL_FORMAT,
-		(VkImageUsageFlagBits)0
+		RSM::NORMAL_FORMAT
 	);
-	/*this->brdfIndexTexture.createAsRenderableSampledTexture(
+	this->brdfIndexTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
 		this->width,
 		this->height,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		(VkImageUsageFlagBits)0
+		RSM::BRDF_INDEX_FORMAT
 	);
-	this->emissionFunctionTexture.createAsRenderableSampledTexture(
+	/*this->emissionFunctionTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
 		this->width,
 		this->height,
@@ -83,7 +80,7 @@ void RSM::cleanup()
 
 	this->depthTexture.cleanup();
 	//this->emissionFunctionTexture.cleanup();
-	//this->brdfIndexTexture.cleanup();
+	this->brdfIndexTexture.cleanup();
 	this->normalTexture.cleanup();
 	this->positionTexture.cleanup();
 }

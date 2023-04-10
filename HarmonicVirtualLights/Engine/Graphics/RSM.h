@@ -8,7 +8,7 @@ class RSM
 private:
 	Texture2D positionTexture;
 	Texture2D normalTexture;
-	//Texture2D brdfIndexTexture;
+	Texture2D brdfIndexTexture;
 	// Texture2D emissionFunctionTexture;
 	Texture2D depthTexture;
 
@@ -25,6 +25,7 @@ private:
 public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat NORMAL_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
+	static const VkFormat BRDF_INDEX_FORMAT = VK_FORMAT_R8G8B8A8_UINT;
 
 	RSM();
 
@@ -37,6 +38,7 @@ public:
 
 	inline const Texture2D& getPositionTexture() const { return this->positionTexture; }
 	inline const Texture2D& getNormalTexture() const { return this->normalTexture; }
+	inline const Texture2D& getBrdfIndexTexture() const { return this->brdfIndexTexture; }
 	inline const Texture2D& getDepthTexture() const { return this->depthTexture; }
 
 	inline const Buffer& getCamUbo() const { return this->camUbo; }
