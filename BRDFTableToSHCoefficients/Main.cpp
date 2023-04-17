@@ -11,6 +11,11 @@ struct RGB
 
 int factorial(int v)
 {
+	if (v > 12)
+	{
+		printf("Factorial of %i cannot be calculated, as the result is too large.\n", v);
+	}
+
     int t = 1;
     for (int i = 2; i <= v; ++i)
     {
@@ -68,7 +73,8 @@ double K(int l, int m)
 double y(int l, int m, double cosTheta, double phi)
 {
     // Zonal harmonics as base case where m = 0
-    double v = K(l, m) * P(l, abs(m), cosTheta);
+	double v = K(l, m);
+	v *= P(l, abs(m), cosTheta);
 
     // Remaining cases
     if (m != 0)
@@ -79,6 +85,78 @@ double y(int l, int m, double cosTheta, double phi)
         v *= sin(double(abs(m)) * phi);
 
     return v;
+}
+
+void getShError(double* brdf, int n, int NUM_SH_COEFFS, int k, const std::vector<RGB>& shCoefficients)
+{
+	int numErrorSamples = 0;
+	double errorR = 0.0f;
+	double errorG = 0.0f;
+	double errorB = 0.0f;
+	double phi_out = 0.0; // Assuming isotropic materials
+	{
+		// theta_out: [0, PI/2)
+		double theta_out = k * 0.5 * M_PI / n;
+
+		// n x 4n table of BRDF values
+		for (int i = 0; i < n; i++)
+		{
+			// theta_in: [0, PI/2)
+			double theta_in = i * 0.5 * M_PI / n;
+
+			for (int j = 0; j < 4 * n; j++)
+			{
+				// phi_in: [0, 2*PI)
+				double phi_in = j * 2.0 * M_PI / (4 * n);
+
+				// Get BRDF sample values
+				double red = 0.0;
+				double green = 0.0;
+				double blue = 0.0;
+				lookup_brdf_val(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
+
+				// Reconstruct BRDF from SH coefficients
+				double shValueR = 0.0;
+				double shValueG = 0.0;
+				double shValueB = 0.0;
+
+				int l = 0;
+				int m = 0;
+				for (int sh = 0; sh < NUM_SH_COEFFS; ++sh)
+				{
+					// SH basis function
+					double yFunc = y(l, m, cos(theta_in), phi_in);
+					shValueR += yFunc * shCoefficients[sh].r;
+					shValueG += yFunc * shCoefficients[sh].g;
+					shValueB += yFunc * shCoefficients[sh].b;
+
+					// Next SH coefficient
+					m++;
+					if (m > l)
+					{
+						l++;
+						m = -l;
+					}
+				}
+
+				// Add mean squared errors
+				errorR += pow(red - shValueR, 2);
+				errorG += pow(green - shValueG, 2);
+				errorB += pow(blue - shValueB, 2);
+				numErrorSamples++;
+
+				// Sample top of hemisphere once
+				if (i == 0) j = 4 * n;
+			}
+		}
+	}
+
+	errorR /= double(numErrorSamples);
+	errorG /= double(numErrorSamples);
+	errorB /= double(numErrorSamples);
+
+	// Print errors
+	printf("Error from SH: (r: %f, g: %f, b: %f)\n", errorR, errorG, errorB);
 }
 
 int main(int argc, char* argv[])
@@ -93,8 +171,39 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
+	// Sample brdf
+	/*{
+		const int n = 16;
+		double phi_out = 0.0f;
+
+		double theta_out = 0.0f;
+		
+		for (int i = 0; i < n; i++)
+		{
+			// theta_in: [0, PI/2)
+			double theta_in = i * 0.5 * M_PI / n;
+
+			for (int j = 0; j < 4 * n; j++)
+			{
+				// phi_in: [0, 2*PI)
+				double phi_in = j * 2.0 * M_PI / (4 * n);
+
+				// Get sample values
+				double red = 0.0;
+				double green = 0.0;
+				double blue = 0.0;
+				lookup_brdf_val(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
+
+				printf("theta_in: %f    phi_in: %f    brdf: (%f, %f, %f)\n", theta_in, phi_in, red, green, blue);
+			}
+		}
+
+		getchar();
+		return 0;
+	}*/
+
 	const int n = 16;
-	const int MAX_L = 4;
+	const int MAX_L = 6;
 	const int NUM_SH_COEFFS = (MAX_L + 1) * (MAX_L + 1);
 
 	// shCoefficients[wo][1D lm-index]
@@ -102,6 +211,7 @@ int main(int argc, char* argv[])
 
 	// Create SH coefficients for each element in F
 	for (int k = 0; k < n; k++)
+	//for (int k = n/2; k <= n/2; k++)
 	{
 		// theta_out: [0, PI/2)
 		double theta_out = k * 0.5 * M_PI / n;
@@ -132,11 +242,6 @@ int main(int argc, char* argv[])
 					double blue = 0.0;
 					lookup_brdf_val(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
 
-					/*if (k == 0 && i == 0)
-					{
-						printf("r: %f, g: %f, b: %f\n", red, green, blue);
-					}*/
-
 					// SH basis function
 					double yFunc = y(l, m, cos(theta_in), phi_in);
 
@@ -145,13 +250,16 @@ int main(int argc, char* argv[])
 					avgRGB.b += blue * yFunc;
 
 					numSamples++;
+
+					// Sample top of hemisphere once
+					if (i == 0) j = 4 * n;
 				}
 			}
 
 			// Assign SH coefficients
-			avgRGB.r = avgRGB.r / double(numSamples) * 2.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
-			avgRGB.g = avgRGB.g / double(numSamples) * 2.0 * M_PI;
-			avgRGB.b = avgRGB.b / double(numSamples) * 2.0 * M_PI;
+			avgRGB.r = avgRGB.r / double(numSamples);// * 2.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
+			avgRGB.g = avgRGB.g / double(numSamples);// * 2.0 * M_PI;
+			avgRGB.b = avgRGB.b / double(numSamples);// * 2.0 * M_PI;
 			shCoefficients[k][sh] = avgRGB;
 
 			// Print current progess
@@ -165,8 +273,13 @@ int main(int argc, char* argv[])
 				m = -l;
 			}
 		}
+
+		// Validate
+		printf("[k: %i/%i]   ", k, n);
+		getShError(brdf, n, NUM_SH_COEFFS, k, shCoefficients[k]);
 	}
 
+	/*
 	// Print final coefficients
 	//printf("#define NUM_ANGLES %i\n", n);
 	printf("const SHVector F[NUM_ANGLES] = SHVector[NUM_ANGLES](\n");
@@ -191,7 +304,7 @@ int main(int argc, char* argv[])
 			printf(",\n");
 		}
 	}
-	printf(");\n");
+	printf(");\n");*/
 
 	getchar();
 
