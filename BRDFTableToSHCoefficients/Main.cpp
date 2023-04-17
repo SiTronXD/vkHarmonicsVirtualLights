@@ -87,6 +87,16 @@ double y(int l, int m, double cosTheta, double phi)
     return v;
 }
 
+void sampleHemisphere(double* brdf, double theta_in, double phi_in, double theta_out, double phi_out, double& outputRed, double& outputGreen, double& outputBlue)
+{
+	lookup_brdf_val(brdf, theta_in, phi_in, theta_out, phi_out, outputRed, outputGreen, outputBlue);
+
+	// Unit sphere (sampled as a hemisphere)
+	/*outputRed = 1.0;
+	outputGreen = 1.0;
+	outputBlue = 1.0;*/
+}
+
 void getShError(double* brdf, int n, int NUM_SH_COEFFS, int k, const std::vector<RGB>& shCoefficients)
 {
 	int numErrorSamples = 0;
@@ -113,7 +123,7 @@ void getShError(double* brdf, int n, int NUM_SH_COEFFS, int k, const std::vector
 				double red = 0.0;
 				double green = 0.0;
 				double blue = 0.0;
-				lookup_brdf_val(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
+				sampleHemisphere(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
 
 				// Reconstruct BRDF from SH coefficients
 				double shValueR = 0.0;
@@ -240,14 +250,14 @@ int main(int argc, char* argv[])
 					double red = 0.0;
 					double green = 0.0;
 					double blue = 0.0;
-					lookup_brdf_val(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
+					sampleHemisphere(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
 
 					// SH basis function
 					double yFunc = y(l, m, cos(theta_in), phi_in);
 
-					avgRGB.r += red * yFunc;
-					avgRGB.g += green * yFunc;
-					avgRGB.b += blue * yFunc;
+					avgRGB.r += red * yFunc * sin(theta_in);
+					avgRGB.g += green * yFunc * sin(theta_in);
+					avgRGB.b += blue * yFunc * sin(theta_in);
 
 					numSamples++;
 
@@ -257,9 +267,9 @@ int main(int argc, char* argv[])
 			}
 
 			// Assign SH coefficients
-			avgRGB.r = avgRGB.r / double(numSamples);// * 2.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
-			avgRGB.g = avgRGB.g / double(numSamples);// * 2.0 * M_PI;
-			avgRGB.b = avgRGB.b / double(numSamples);// * 2.0 * M_PI;
+			avgRGB.r = avgRGB.r / double(numSamples) * 2.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
+			avgRGB.g = avgRGB.g / double(numSamples) * 2.0 * M_PI;
+			avgRGB.b = avgRGB.b / double(numSamples) * 2.0 * M_PI;
 			shCoefficients[k][sh] = avgRGB;
 
 			// Print current progess
@@ -278,11 +288,10 @@ int main(int argc, char* argv[])
 		printf("[k: %i/%i]   ", k, n);
 		getShError(brdf, n, NUM_SH_COEFFS, k, shCoefficients[k]);
 	}
-
-	/*
+	
 	// Print final coefficients
 	//printf("#define NUM_ANGLES %i\n", n);
-	printf("const SHVector F[NUM_ANGLES] = SHVector[NUM_ANGLES](\n");
+	/*printf("const SHVector F[NUM_ANGLES] = SHVector[NUM_ANGLES](\n");
 	for (size_t i = 0; i < shCoefficients.size(); ++i)
 	{
 		const std::vector<RGB>& coeffs = shCoefficients[i];
