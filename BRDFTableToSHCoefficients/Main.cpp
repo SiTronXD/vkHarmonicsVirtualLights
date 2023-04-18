@@ -135,10 +135,10 @@ void getShError(double* brdf, int n, int NUM_SH_COEFFS, int k, const std::vector
 				for (int sh = 0; sh < NUM_SH_COEFFS; ++sh)
 				{
 					// SH basis function
-					double yFunc = y(l, m, cos(theta_in), phi_in);
-					shValueR += yFunc * shCoefficients[sh].r;
-					shValueG += yFunc * shCoefficients[sh].g;
-					shValueB += yFunc * shCoefficients[sh].b;
+					double shBasisFunc = y(l, m, cos(theta_in), phi_in);
+					shValueR += shBasisFunc * shCoefficients[sh].r;
+					shValueG += shBasisFunc * shCoefficients[sh].g;
+					shValueB += shBasisFunc * shCoefficients[sh].b;
 
 					// Next SH coefficient
 					m++;
@@ -253,11 +253,11 @@ int main(int argc, char* argv[])
 					sampleHemisphere(brdf, theta_in, phi_in, theta_out, phi_out, red, green, blue);
 
 					// SH basis function
-					double yFunc = y(l, m, cos(theta_in), phi_in);
+					double shBasisFunc = y(l, m, cos(theta_in), phi_in);
 
-					avgRGB.r += red * yFunc * sin(theta_in);
-					avgRGB.g += green * yFunc * sin(theta_in);
-					avgRGB.b += blue * yFunc * sin(theta_in);
+					avgRGB.r += red * shBasisFunc * sin(theta_in);
+					avgRGB.g += green * shBasisFunc * sin(theta_in);
+					avgRGB.b += blue * shBasisFunc * sin(theta_in);
 
 					numSamples++;
 
