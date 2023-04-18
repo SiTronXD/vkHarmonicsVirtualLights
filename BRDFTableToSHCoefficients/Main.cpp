@@ -267,9 +267,9 @@ int main(int argc, char* argv[])
 			}
 
 			// Assign SH coefficients
-			avgRGB.r = (avgRGB.r / double(numSamples)) * 3.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
-			avgRGB.g = (avgRGB.g / double(numSamples)) * 3.0 * M_PI;
-			avgRGB.b = (avgRGB.b / double(numSamples)) * 3.0 * M_PI;
+			avgRGB.r = (avgRGB.r / double(numSamples)) * 2.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
+			avgRGB.g = (avgRGB.g / double(numSamples)) * 2.0 * M_PI;
+			avgRGB.b = (avgRGB.b / double(numSamples)) * 2.0 * M_PI;
 
 			shCoefficients[k][sh] = avgRGB;
 			/*if (m == 0)
