@@ -270,10 +270,27 @@ int main(int argc, char* argv[])
 			avgRGB.r = (avgRGB.r / double(numSamples)) * 3.0 * M_PI; // pdf(wi) = 1 / (2 * PI) => 1 / pdf(wi) = 2 * PI
 			avgRGB.g = (avgRGB.g / double(numSamples)) * 3.0 * M_PI;
 			avgRGB.b = (avgRGB.b / double(numSamples)) * 3.0 * M_PI;
-			shCoefficients[k][sh] = avgRGB;
 
-			// Print current progess
-			//printf("Finished (l: %i, m: %i)\n", l, m);
+			shCoefficients[k][sh] = avgRGB;
+			/*if (m == 0)
+			{
+				shCoefficients[k][sh] = avgRGB;
+			}
+			else
+			{
+				avgRGB.r *= sqrt(2.0);
+				avgRGB.g *= sqrt(2.0);
+				avgRGB.b *= sqrt(2.0);
+
+				if (m < 0)
+				{
+					avgRGB.r *= pow(-1.0, m);
+					avgRGB.g *= pow(-1.0, m);
+					avgRGB.b *= pow(-1.0, m);
+				}
+
+				shCoefficients[k][sh] = avgRGB;
+			}*/
 
 			// Next SH coefficient
 			m++;
@@ -290,7 +307,6 @@ int main(int argc, char* argv[])
 	}
 	
 	// Print final coefficients
-	//printf("#define NUM_ANGLES %i\n", n);
 	/*printf("const SHVector F[NUM_ANGLES] = SHVector[NUM_ANGLES](\n");
 	for (size_t i = 0; i < shCoefficients.size(); ++i)
 	{
