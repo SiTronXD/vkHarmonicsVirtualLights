@@ -228,15 +228,59 @@ void Renderer::createCamUbo()
 
 void Renderer::createShCoefficientBuffer(Scene& scene)
 {
-	std::vector<SHData> coefficients;
-	coefficients.push_back({ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
+	std::vector<SHData> shSets;
+
+	// For each BRDF data within a material
+	uint32_t numAngles = 0;
+	uint32_t numCoefficients = 0;
+	for (size_t i = 0; i < this->resourceManager->getNumBRDFs(); ++i)
+	{
+		const std::vector<std::vector<RGB>>& shCoeffs = 
+			this->resourceManager->getBRDFData(i).getShCoefficients();
+
+		// Compare number of angles
+		if (i == 0)
+		{
+			numAngles = uint32_t(shCoeffs.size());
+		}
+		else if (numAngles != uint32_t(shCoeffs.size()))
+		{
+			Log::error("Number of angles does not match between each BRDF set.");
+		}
+
+		// For each angle
+		for (size_t j = 0; j < shCoeffs.size(); ++j)
+		{
+			// Compare number of coefficients
+			if (i == 0 && j == 0)
+			{
+				numCoefficients = shCoeffs[j].size();
+			}
+			else if (numCoefficients != uint32_t(shCoeffs[j].size()))
+			{
+				Log::error("Number of coefficients does not match between each SH set.");
+			}
+
+			// For each coefficient
+			SHData newShData{};
+			for (size_t k = 0; k < shCoeffs[j].size(); ++k)
+			{
+				for (uint32_t n = 0; n < 3; ++n)
+				{
+					newShData.coefficients[k * 3 + n] = shCoeffs[j][k].rgb[n]; // R0 G0 B0 R1 G1 B1 R2 G2 B2
+				}
+			}
+
+			shSets.push_back(newShData);
+		}
+	}
 
 	// Create sh coefficient buffer
-	VkDeviceSize bufferSize = sizeof(coefficients[0]) * coefficients.size();
+	VkDeviceSize bufferSize = sizeof(shSets[0]) * shSets.size();
 	this->shCoefficientBuffer.createStaticGpuBuffer(
 		this->gfxAllocContext,
 		bufferSize,
-		coefficients.data()
+		shSets.data()
 	);
 }
 

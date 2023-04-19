@@ -34,7 +34,9 @@ public:
 
 	inline Mesh& getMesh(uint32_t meshID) { return this->meshes[meshID]; }
 	inline Texture* getTexture(uint32_t textureID) { return this->textures[textureID].get(); }
+	inline BRDFData& getBRDFData(uint32_t brdfID) { return this->brdfs[brdfID]; }
 
 	inline size_t getNumMeshes() const { return this->meshes.size(); }
 	inline size_t getNumTextures() const { return this->textures.size(); }
+	inline size_t getNumBRDFs() const { return this->brdfs.size(); }
 };

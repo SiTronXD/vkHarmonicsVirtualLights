@@ -20,6 +20,7 @@
 #include "../Graphics/Texture/TextureData.h"
 #include "../Graphics/Texture/TextureDataFloat.h"
 #include "../Graphics/Texture/TextureDataUchar.h"
+#include "../Graphics/Vulkan/Legacy/RenderPass.h"
 #include "../Graphics/Vulkan/Device.h"
 #include "../Graphics/Vulkan/CommandBuffer.h"
 #include "../Graphics/Vulkan/CommandBufferArray.h"

@@ -19,9 +19,12 @@ layout(binding = 5) uniform sampler2D albedoTex;
 layout(binding = 6) uniform sampler2D roughnessTex;
 layout(binding = 7) uniform sampler2D metallicTex;
 
+#define MAX_L 6
+#define NUM_SH_COEFFICIENTS ((MAX_L + 1) * (MAX_L + 1))
+#define NUM_SHADER_SH_COEFFS (NUM_SH_COEFFICIENTS * 3)
 struct SHData
 {
-	vec4 f;
+	float coeffs[((NUM_SHADER_SH_COEFFS + 3) / 4) * 4];
 };
 layout(binding = 8) readonly buffer SHCoefficientsBuffer
 {
@@ -238,7 +241,8 @@ void main()
 
 	vec3 color = ambient + Lo;
 
-	color *= shCoefficients.coefficientSets[0].f.rgb;
+	// TODO: remove this
+	color *= shCoefficients.coefficientSets[0].coeffs[0] > -10.0f ? 1.0f : 0.0f;
 
 	outColor = vec4(color, 1.0f);
 }

@@ -27,7 +27,11 @@ struct PrefilterPCD
 	glm::vec4 roughness; // vec4(roughness, 0.0f, 0.0f, 0.0f)
 };
 
+#define MAX_L 6
+#define NUM_SH_COEFFICIENTS ((MAX_L + 1) * (MAX_L + 1))
+#define NUM_SHADER_SH_COEFFS (NUM_SH_COEFFICIENTS * 3)
 struct SHData
 {
-	glm::vec4 f;
+	// Ceil NUM_SHADER_SH_COEFFS to be divisible by 4, for 16-byte alignment
+	float coefficients[((NUM_SHADER_SH_COEFFS + 3) / 4) * 4];
 };
