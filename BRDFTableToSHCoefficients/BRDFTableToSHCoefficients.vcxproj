@@ -73,10 +73,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BRDFRead.cpp" />
+    <ClCompile Include="Exporter.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="SphericalHarmonics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BRDFRead.h" />
+    <ClInclude Include="Exporter.h" />
+    <ClInclude Include="SphericalHarmonics.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
