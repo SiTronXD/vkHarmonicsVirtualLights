@@ -209,9 +209,8 @@ int main(int argc, char* argv[])
 	}
 	
 	// Export
-	const std::string exportedName = "exportedBRDFs/" + materialFileName + ".shbrdf";
 	Exporter exporter;
-	exporter.writeToFile(shCoefficients, exportedName);
+	exporter.writeToFile(shCoefficients, materialFileName);
 	//exporter.printAsGLSLArray(shCoefficients);
 
 	getchar();

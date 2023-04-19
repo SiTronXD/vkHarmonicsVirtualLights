@@ -1,8 +1,34 @@
 #include <fstream>
 #include "Exporter.h"
 
-void Exporter::writeToFile(const std::vector<std::vector<RGB>>& shCoefficients, const std::string& fileName)
+void Exporter::splitString(
+	std::string& str,
+	const char& delim,
+	std::vector<std::string>& output)
 {
+	size_t pos = 0;
+	while ((pos = str.find(delim)) != std::string::npos)
+	{
+		// Extract and add token
+		output.emplace_back(str.substr(0, pos));
+
+		// Remove front
+		str.erase(0, pos + 1);
+	}
+
+	// Add remaining string
+	output.emplace_back(str);
+}
+
+void Exporter::writeToFile(
+	const std::vector<std::vector<RGB>>& shCoefficients, 
+	std::string fileName)
+{
+	// Preprocess file name
+	std::vector<std::string> splitString;
+	this->splitString(fileName, '.', splitString);
+	fileName = "exportedBRDFs/" + splitString[0] + ".shbrdf";
+
 	// Create file
 	std::ofstream brdfFile(fileName);
 	if (!brdfFile.is_open())
@@ -27,6 +53,8 @@ void Exporter::writeToFile(const std::vector<std::vector<RGB>>& shCoefficients, 
 
 	// Close file
 	brdfFile.close();
+
+	printf(("Output SH BRDF file: " + fileName).c_str());
 }
 
 void Exporter::printAsGLSLArray(const std::vector<std::vector<RGB>>& shCoefficients)

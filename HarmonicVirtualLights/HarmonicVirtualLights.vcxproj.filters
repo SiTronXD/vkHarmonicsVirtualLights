@@ -195,6 +195,9 @@
     <ClCompile Include="Engine\Graphics\BRDFData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Dev\StrHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scenes\TestScene.h">
@@ -390,6 +393,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\BRDFData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Dev\StrHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
