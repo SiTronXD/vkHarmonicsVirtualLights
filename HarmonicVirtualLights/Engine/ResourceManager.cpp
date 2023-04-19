@@ -6,7 +6,9 @@
 #include "Graphics/Texture/Texture2D.h"
 
 ResourceManager::ResourceManager()
-	: gfxAllocContext(nullptr)
+	: gfxAllocContext(nullptr),
+	numAngles(0),
+	numCoefficientsPerAngle(0)
 {
 }
 
@@ -152,6 +154,30 @@ uint32_t ResourceManager::addBRDF(const std::string& filePath)
 
 	// Load BRDF
 	createdBrdf.createFromFile(filePath);
+
+	// Create references for validation
+	if (createdBrdfIndex == 0)
+	{
+		this->numAngles = uint32_t(createdBrdf.getShCoefficientSets().size());
+		this->numCoefficientsPerAngle = uint32_t(createdBrdf.getShCoefficientSets()[0].size());
+	}
+
+	// Validate number of angles
+	if (this->numAngles != uint32_t(createdBrdf.getShCoefficientSets().size()))
+	{
+		Log::error("The number of angles (" + std::to_string(this->numAngles) + ") does not match between all BRDF files.");
+		return 0;
+	}
+
+	// Validate number of coefficients within each SH set per angle
+	for (uint32_t i = 0; i < this->numAngles; ++i)
+	{
+		if (this->numCoefficientsPerAngle != uint32_t(createdBrdf.getShCoefficientSets()[i].size()))
+		{
+			Log::error("The number of SH coefficients per set (" + std::to_string(this->numCoefficientsPerAngle) + ") does not match between all SH sets.");
+			return 0;
+		}
+	}
 
 	return createdBrdfIndex;
 }

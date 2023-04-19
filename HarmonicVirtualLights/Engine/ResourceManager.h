@@ -17,6 +17,10 @@ private:
 	std::vector<Mesh> meshes;
 	std::vector<BRDFData> brdfs;
 
+	// Used to validate BRDF sets
+	uint32_t numAngles;
+	uint32_t numCoefficientsPerAngle;
+
 	const GfxAllocContext* gfxAllocContext;
 
 public:

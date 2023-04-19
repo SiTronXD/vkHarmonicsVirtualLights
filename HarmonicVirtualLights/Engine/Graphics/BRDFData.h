@@ -16,5 +16,5 @@ private:
 public:
 	bool createFromFile(const std::string& filePath);
 
-	inline const std::vector<std::vector<RGB>>& getShCoefficients() const { return this->shCoefficients; }
+	inline const std::vector<std::vector<RGB>>& getShCoefficientSets() const { return this->shCoefficients; }
 };
