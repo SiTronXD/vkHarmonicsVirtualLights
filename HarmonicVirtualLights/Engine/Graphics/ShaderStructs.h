@@ -8,11 +8,12 @@ struct CamUBO
 	glm::vec4 pos;
 };
 
-// Push constant data
+// Push constant data (guaranteed 128 bytes)
 struct PCD
 {
 	glm::mat4 modelMat;
 	glm::vec4 materialProperties; // vec4(roughness, metallic, 0, 0)
+	glm::uvec4 brdfProperties; // uvec4(brdfIndex, 0, 0, 0);
 };
 
 struct PostProcessPCD

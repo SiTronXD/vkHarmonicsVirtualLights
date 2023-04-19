@@ -36,9 +36,7 @@ void TestScene::init()
 	);*/
 
 	uint32_t brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
-	brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
-
-	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
+	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/white-fabric.shbrdf");
 
 	uint32_t meshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj");
 	//uint32_t meshId = this->getResourceManager().addMesh("Resources/Models/suzanne.obj");
@@ -62,6 +60,7 @@ void TestScene::init()
 		material.albedoTextureId = albedoTextureId;
 		material.roughnessTextureId = roughnessTextureId;
 		material.metallicTextureId = metallicTextureId;
+		material.brdfId = brdfId0;
 	}
 
 	// Add objects with varying properties
@@ -77,6 +76,7 @@ void TestScene::init()
 			newMat.albedoTextureId = albedoTextureId;
 			newMat.roughnessTextureId = roughnessTextureId;
 			newMat.metallicTextureId = metallicTextureId;
+			newMat.brdfId = brdfId1;
 
 			uint32_t newEntity = this->createEntity();
 			this->setComponent<MeshComponent>(newEntity, MeshComponent());

@@ -559,6 +559,7 @@ void Renderer::recordCommandBuffer(
 						// Push constant data
 						PCD pushConstantData{};
 						pushConstantData.modelMat = transform.modelMat;
+						pushConstantData.brdfProperties.x = material.brdfId;
 						commandBuffer.pushConstant(
 							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
 							&pushConstantData
@@ -792,6 +793,7 @@ void Renderer::recordCommandBuffer(
 					pushConstantData.modelMat = transform.modelMat;
 					pushConstantData.materialProperties.x = material.roughness;
 					pushConstantData.materialProperties.y = material.metallic;
+					pushConstantData.brdfProperties.x = material.brdfId;
 					commandBuffer.pushConstant(
 						this->gfxResManager.getGraphicsPipelineLayout(),
 						&pushConstantData
