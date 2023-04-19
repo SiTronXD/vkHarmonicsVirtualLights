@@ -36,6 +36,9 @@ void TestScene::init()
 	);*/
 
 	uint32_t brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
+	brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
+
+	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
 
 	uint32_t meshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj");
 	//uint32_t meshId = this->getResourceManager().addMesh("Resources/Models/suzanne.obj");

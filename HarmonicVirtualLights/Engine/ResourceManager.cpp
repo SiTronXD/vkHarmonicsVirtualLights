@@ -136,8 +136,17 @@ uint32_t ResourceManager::addCubeMap(const std::vector<std::string>& filePaths)
 
 uint32_t ResourceManager::addBRDF(const std::string& filePath)
 {
-	// BRDF resource
+	// Check if material has already been added
+	if (this->nameToBrdf.count(filePath) != 0)
+	{
+		return this->nameToBrdf[filePath];
+	}
+
+	// Add BRDF name
 	uint32_t createdBrdfIndex = uint32_t(this->brdfs.size());
+	this->nameToBrdf.insert({ filePath, createdBrdfIndex });
+
+	// Create BRDF resource
 	this->brdfs.push_back(BRDFData());
 	BRDFData& createdBrdf = this->brdfs[createdBrdfIndex];
 

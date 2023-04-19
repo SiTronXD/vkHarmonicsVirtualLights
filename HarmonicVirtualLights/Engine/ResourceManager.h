@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 #include "Graphics/Mesh.h"
 #include "Graphics/BRDFData.h"
@@ -10,6 +11,8 @@ struct GfxAllocContext;
 class ResourceManager
 {
 private:
+	std::unordered_map<std::string, uint32_t> nameToBrdf;
+
 	std::vector<std::shared_ptr<Texture>> textures;
 	std::vector<Mesh> meshes;
 	std::vector<BRDFData> brdfs;
