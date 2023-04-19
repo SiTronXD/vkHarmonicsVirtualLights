@@ -10,14 +10,23 @@ layout(binding = 1) uniform LightCamUBO
 	vec4 pos; // (x, y, z, shadow map size)
 } lightCamUbo;
 
-layout(set = 0, binding = 2) uniform sampler2D brdfLutTex;
-layout(set = 0, binding = 3) uniform samplerCube prefilterMap;
+layout(binding = 2) uniform sampler2D brdfLutTex;
+layout(binding = 3) uniform samplerCube prefilterMap;
 
-layout(set = 0, binding = 4) uniform sampler2D rsmDepthTex;
+layout(binding = 4) uniform sampler2D rsmDepthTex;
 
-layout(set = 0, binding = 5) uniform sampler2D albedoTex;
-layout(set = 0, binding = 6) uniform sampler2D roughnessTex;
-layout(set = 0, binding = 7) uniform sampler2D metallicTex;
+layout(binding = 5) uniform sampler2D albedoTex;
+layout(binding = 6) uniform sampler2D roughnessTex;
+layout(binding = 7) uniform sampler2D metallicTex;
+
+struct SHData
+{
+	vec4 f;
+};
+layout(binding = 8) readonly buffer SHCoefficientsBuffer
+{
+	SHData coefficientSets[];
+} shCoefficients;
 
 layout(location = 0) in vec3 fragNormal;
 layout(location = 1) in vec3 fragWorldPos;
@@ -228,5 +237,8 @@ void main()
 	ambient = vec3(0.0f);
 
 	vec3 color = ambient + Lo;
+
+	color *= shCoefficients.coefficientSets[0].f.rgb;
+
 	outColor = vec4(color, 1.0f);
 }

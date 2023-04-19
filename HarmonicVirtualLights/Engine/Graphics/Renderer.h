@@ -16,7 +16,8 @@
 #include "Vulkan/CommandBufferArray.h"
 #include "Vulkan/SemaphoreArray.h"
 #include "Vulkan/FenceArray.h"
-#include "Buffer/Buffer.h"
+#include "Buffer/UniformBuffer.h"
+#include "Buffer/StorageBuffer.h"
 #include "Texture/Texture.h"
 #include "Swapchain.h"
 #include "Camera.h"
@@ -65,7 +66,8 @@ private:
 	SemaphoreArray postProcessFinishedSemaphores;
 	FenceArray inFlightFences;
 
-	Buffer uniformBuffer;
+	UniformBuffer uniformBuffer;
+	StorageBuffer shCoefficientBuffer;
 
 	Window* window;
 	ResourceManager* resourceManager;
@@ -84,6 +86,7 @@ private:
 	void initImgui();
 
 	void createCamUbo();
+	void createShCoefficientBuffer(Scene& scene);
 	void createSyncObjects();
 
 	void updateUniformBuffer(const Camera& camera);

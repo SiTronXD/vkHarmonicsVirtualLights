@@ -196,6 +196,7 @@ void Renderer::cleanup()
 
 	this->swapchain.cleanup();
 
+	this->shCoefficientBuffer.cleanup();
 	this->uniformBuffer.cleanup();
 
 	this->imageAvailableSemaphores.cleanup();
@@ -221,8 +222,21 @@ void Renderer::createCamUbo()
 {
 	this->uniformBuffer.createDynamicCpuBuffer(
 		this->gfxAllocContext,
-		sizeof(CamUBO),
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+		sizeof(CamUBO)
+	);
+}
+
+void Renderer::createShCoefficientBuffer(Scene& scene)
+{
+	std::vector<SHData> coefficients;
+	coefficients.push_back({ glm::vec4(1.0f, 0.5f, 0.0f, 1.0f) });
+
+	// Create sh coefficient buffer
+	VkDeviceSize bufferSize = sizeof(coefficients[0]) * coefficients.size();
+	this->shCoefficientBuffer.createStaticGpuBuffer(
+		this->gfxAllocContext,
+		bufferSize,
+		coefficients.data()
 	);
 }
 
@@ -685,12 +699,12 @@ void Renderer::recordCommandBuffer(
 			// Binding 0
 			VkDescriptorBufferInfo uboInfo{};
 			uboInfo.buffer = this->uniformBuffer.getVkBuffer(GfxState::getFrameIndex());
-			uboInfo.range = sizeof(CamUBO);
+			uboInfo.range = this->uniformBuffer.getBufferSize();
 
 			// Binding 1
 			VkDescriptorBufferInfo lightCamUboInfo{};
 			lightCamUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
-			lightCamUboInfo.range = sizeof(CamUBO);
+			lightCamUboInfo.range = this->rsm.getCamUbo().getBufferSize();
 
 			// Binding 2
 			const Texture* brdfLutTexture =
@@ -726,7 +740,12 @@ void Renderer::recordCommandBuffer(
 			VkDescriptorImageInfo metallicImageInfo{};
 			metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			std::array<VkWriteDescriptorSet, 8> writeDescriptorSets
+			// Binding 8
+			VkDescriptorBufferInfo shCoeffSboInfo{};
+			shCoeffSboInfo.buffer = this->shCoefficientBuffer.getVkBuffer();
+			shCoeffSboInfo.range = this->shCoefficientBuffer.getBufferSize();
+
+			std::array<VkWriteDescriptorSet, 9> writeDescriptorSets
 			{
 				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
 				DescriptorSet::writeBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightCamUboInfo),
@@ -738,7 +757,9 @@ void Renderer::recordCommandBuffer(
 
 				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
 				DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-				DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
+				DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+
+				DescriptorSet::writeBuffer(8, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &shCoeffSboInfo)
 			};
 
 			// Loop through entities with mesh components
@@ -983,6 +1004,7 @@ void Renderer::init(ResourceManager& resourceManager)
 void Renderer::initForScene(Scene& scene)
 {
 	this->resourceProcessor.prefilterCubeMaps();
+	this->createShCoefficientBuffer(scene);
 
 	// Add skybox as entity to scene
 	{

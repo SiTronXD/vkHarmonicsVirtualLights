@@ -14,7 +14,6 @@ private:
 	std::vector<VmaAllocation> bufferMemories;
 
 	const GfxAllocContext* gfxAllocContext;
-
 	VkDeviceSize bufferSize;
 
 	void createBuffer(
@@ -24,6 +23,13 @@ private:
 		VmaAllocationCreateFlags properties,
 		VkBuffer& buffer,
 		VmaAllocation& bufferMemory);
+
+protected:
+	void createStaticGpuBuffer(
+		const GfxAllocContext& gfxAllocContext,
+		const VkBufferUsageFlags& usageFlags,
+		const VkDeviceSize& bufferSize,
+		const void* cpuData);
 
 public:
 	Buffer();
@@ -38,16 +44,6 @@ public:
 	void createStagingBuffer(
 		const GfxAllocContext& gfxAllocContext,
 		const VkDeviceSize& size);
-	void createDynamicCpuBuffer(
-		const GfxAllocContext& gfxAllocContext,
-		const VkDeviceSize& bufferSize,
-		const VkBufferUsageFlags& usage
-	);
-	void createStaticGpuBuffer(
-		const GfxAllocContext& gfxAllocContext,
-		const VkBufferUsageFlags& usageFlags,
-		const VkDeviceSize& bufferSize,
-		const void* cpuData);
 	void updateBuffer(const void* cpuData);
 
 	static void copyBuffer(
@@ -60,4 +56,5 @@ public:
 
 	inline const VkBuffer& getVkBuffer(const uint32_t& index = 0) const { return this->buffers[index]; }
 	inline const VmaAllocation& getVmaAllocation(const uint32_t& index = 0) const { return this->bufferMemories[index]; }
+	inline VkDeviceSize getBufferSize() const { return this->bufferSize; }
 };

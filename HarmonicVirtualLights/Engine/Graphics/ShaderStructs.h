@@ -26,3 +26,8 @@ struct PrefilterPCD
 	glm::uvec4 resolution; // uvec4(mip 0 width, mip 0 height, mip N width, mip N height)
 	glm::vec4 roughness; // vec4(roughness, 0.0f, 0.0f, 0.0f)
 };
+
+struct SHData
+{
+	glm::vec4 f;
+};

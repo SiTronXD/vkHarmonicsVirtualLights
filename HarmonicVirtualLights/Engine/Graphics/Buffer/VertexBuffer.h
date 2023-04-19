@@ -54,9 +54,6 @@ class VertexBuffer : public Buffer
 {
 private:
 public:
-	VertexBuffer();
-	~VertexBuffer();
-
 	void createVertexBuffer(
 		const GfxAllocContext& gfxAllocContext,
 		const std::vector<Vertex>& vertices);

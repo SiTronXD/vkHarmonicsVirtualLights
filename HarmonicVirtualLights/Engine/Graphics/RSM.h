@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Texture/Texture2D.h"
-#include "Buffer/Buffer.h"
+#include "Buffer/UniformBuffer.h"
 
 class RSM
 {
@@ -12,7 +12,7 @@ private:
 	// Texture2D emissionFunctionTexture;
 	Texture2D depthTexture;
 
-	Buffer camUbo;
+	UniformBuffer camUbo;
 
 	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;

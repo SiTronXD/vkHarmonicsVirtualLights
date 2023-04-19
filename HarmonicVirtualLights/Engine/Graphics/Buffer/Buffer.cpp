@@ -82,24 +82,6 @@ void Buffer::createStagingBuffer(
 	);
 }
 
-void Buffer::createDynamicCpuBuffer(
-	const GfxAllocContext& gfxAllocContext, 
-	const VkDeviceSize& bufferSize, 
-	const VkBufferUsageFlags& usage)
-{
-	this->gfxAllocContext = &gfxAllocContext;
-	this->bufferSize = bufferSize;
-
-	this->createBuffer(
-		*this->gfxAllocContext,
-		bufferSize,
-		usage,
-		VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | 
-			VMA_ALLOCATION_CREATE_MAPPED_BIT,
-		GfxSettings::FRAMES_IN_FLIGHT
-	);
-}
-
 void Buffer::createStaticGpuBuffer(
 	const GfxAllocContext& gfxAllocContext, 
 	const VkBufferUsageFlags& usageFlags,

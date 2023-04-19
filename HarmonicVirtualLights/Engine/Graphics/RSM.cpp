@@ -47,8 +47,7 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 	// Cam ubo
 	this->camUbo.createDynamicCpuBuffer(
 		gfxAllocContext,
-		sizeof(CamUBO),
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+		sizeof(CamUBO)
 	);
 	this->position = glm::vec3(2.0f, 2.0f, 2.0f);
 	this->projectionMatrix = glm::perspective(
