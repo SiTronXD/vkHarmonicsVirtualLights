@@ -60,7 +60,7 @@ uint32_t ResourceManager::addMesh(const std::string& filePath)
 
 uint32_t ResourceManager::addTexture(const std::string& filePath)
 {
-	// Texture Resource
+	// Texture resource
 	uint32_t createdTextureIndex = this->addEmptyTexture();
 	Texture2D* createdTexture = static_cast<Texture2D*>(this->textures[createdTextureIndex].get());
 
@@ -132,4 +132,17 @@ uint32_t ResourceManager::addCubeMap(const std::vector<std::string>& filePaths)
 	this->textures.push_back(prefilteredCubeMap);
 
 	return createdTextureIndex;
+}
+
+uint32_t ResourceManager::addBRDF(const std::string& filePath)
+{
+	// BRDF resource
+	uint32_t createdBrdfIndex = uint32_t(this->brdfs.size());
+	this->brdfs.push_back(BRDFData());
+	BRDFData& createdBrdf = this->brdfs[createdBrdfIndex];
+
+	// Load BRDF
+	createdBrdf.createFromFile(filePath);
+
+	return createdBrdfIndex;
 }
