@@ -12,6 +12,7 @@ class BRDFData
 private:
 	// shCoefficients[wo][shIndex]
 	std::vector<std::vector<RGB>> shCoefficients;
+	std::vector<std::vector<RGB>> shCoefficientsCosTerm;
 
 public:
 	bool createFromFile(const std::string& filePath);

@@ -127,6 +127,7 @@ int main(int argc, char* argv[])
 
 	// shCoefficients[wo][1D lm-index]
 	std::vector<std::vector<RGB>> shCoefficients(n, std::vector<RGB>(NUM_SH_COEFFS));
+	std::vector<std::vector<RGB>> shCoefficientsCos(n, std::vector<RGB>(NUM_SH_COEFFS));
 
 	// Create SH coefficients for each element in F
 	for (int k = 0; k < n; k++)
@@ -139,6 +140,7 @@ int main(int argc, char* argv[])
 		for (int sh = 0; sh < NUM_SH_COEFFS; ++sh)
 		{
 			RGB avgRGB{};
+			RGB avgRGBCos{};
 			int numSamples = 0;
 
 			// n x 4n table of BRDF values
@@ -164,6 +166,7 @@ int main(int argc, char* argv[])
 
 					// Add sample
 					avgRGB += sampleRGB * shFactor;
+					avgRGBCos += sampleRGB * shFactor * cos(theta_in);
 
 					numSamples++;
 
@@ -174,7 +177,9 @@ int main(int argc, char* argv[])
 
 			// Assign SH coefficients
 			avgRGB = (avgRGB / double(numSamples)) * 2.0 * M_PI; // Hemisphere surface area: 2PI
+			avgRGBCos = (avgRGBCos / double(numSamples)) * 2.0 * M_PI;
 			shCoefficients[k][sh] = avgRGB;
+			shCoefficientsCos[k][sh] = avgRGBCos;
 
 			/*if (m == 0)
 			{
@@ -211,8 +216,10 @@ int main(int argc, char* argv[])
 	
 	// Export
 	Exporter exporter;
-	exporter.writeToFile(shCoefficients, materialFileName);
+	exporter.writeToFile(shCoefficients, shCoefficientsCos, materialFileName);
+
 	//exporter.printAsGLSLArray(shCoefficients);
+	//exporter.printAsGLSLArray(shCoefficientsCos);
 
 	getchar();
 

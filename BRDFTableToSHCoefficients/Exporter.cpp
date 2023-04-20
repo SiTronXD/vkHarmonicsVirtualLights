@@ -21,7 +21,8 @@ void Exporter::splitString(
 }
 
 void Exporter::writeToFile(
-	const std::vector<std::vector<RGB>>& shCoefficients, 
+	const std::vector<std::vector<RGB>>& shCoefficients,
+	const std::vector<std::vector<RGB>>& shCoefficientsCos,
 	std::string fileName)
 {
 	// Preprocess file name
@@ -37,7 +38,7 @@ void Exporter::writeToFile(
 		return;
 	}
 
-	// Write to file
+	// Write shCoefficients to file
 	for (size_t i = 0; i < shCoefficients.size(); ++i)
 	{
 		brdfFile << "k: " << i << "/" << shCoefficients.size() << std::endl;
@@ -51,10 +52,24 @@ void Exporter::writeToFile(
 		brdfFile << std::endl;
 	}
 
+	// Write shCoefficientsCos to file
+	for (size_t i = 0; i < shCoefficientsCos.size(); ++i)
+	{
+		brdfFile << "kc: " << i << "/" << shCoefficientsCos.size() << " (cos(theta_in))" << std::endl;
+
+		const std::vector<RGB>& coeffs = shCoefficientsCos[i];
+		for (size_t j = 0; j < coeffs.size(); ++j)
+		{
+			brdfFile << coeffs[j].r << " " << coeffs[j].g << " " << coeffs[j].b << std::endl;
+		}
+
+		brdfFile << std::endl;
+	}
+
 	// Close file
 	brdfFile.close();
 
-	printf(("Output SH BRDF file: " + fileName).c_str());
+	printf(("Output SH BRDF file: " + fileName + "\n").c_str());
 }
 
 void Exporter::printAsGLSLArray(const std::vector<std::vector<RGB>>& shCoefficients)
