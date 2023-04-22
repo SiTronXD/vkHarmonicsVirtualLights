@@ -8,7 +8,8 @@
 ResourceManager::ResourceManager()
 	: gfxAllocContext(nullptr),
 	numAngles(0),
-	numCoefficientsPerAngle(0)
+	numCoefficientsPerAngle(0),
+	numCoefficientsCosTermPerAngle(0)
 {
 }
 
@@ -160,6 +161,7 @@ uint32_t ResourceManager::addBRDF(const std::string& filePath)
 	{
 		this->numAngles = uint32_t(createdBrdf.getShCoefficientSets().size());
 		this->numCoefficientsPerAngle = uint32_t(createdBrdf.getShCoefficientSets()[0].size());
+		this->numCoefficientsCosTermPerAngle = uint32_t(createdBrdf.getShCoefficientCosSets()[0].size());
 	}
 
 	// Validate number of angles
@@ -168,13 +170,26 @@ uint32_t ResourceManager::addBRDF(const std::string& filePath)
 		Log::error("The number of angles (" + std::to_string(this->numAngles) + ") does not match between all BRDF files.");
 		return 0;
 	}
+	if (this->numAngles != uint32_t(createdBrdf.getShCoefficientCosSets().size()))
+	{
+		Log::error("The number of angles (" + std::to_string(this->numAngles) + ") does not match between all BRDF files.");
+		return 0;
+	}
 
 	// Validate number of coefficients within each SH set per angle
 	for (uint32_t i = 0; i < this->numAngles; ++i)
 	{
+		// No cos term
 		if (this->numCoefficientsPerAngle != uint32_t(createdBrdf.getShCoefficientSets()[i].size()))
 		{
 			Log::error("The number of SH coefficients per set (" + std::to_string(this->numCoefficientsPerAngle) + ") does not match between all SH sets.");
+			return 0;
+		}
+
+		// Cos term
+		if (this->numCoefficientsCosTermPerAngle != uint32_t(createdBrdf.getShCoefficientCosSets()[i].size()))
+		{
+			Log::error("The number of SH coefficients with cos term per set (" + std::to_string(this->numCoefficientsCosTermPerAngle) + ") does not match between all SH sets.");
 			return 0;
 		}
 	}

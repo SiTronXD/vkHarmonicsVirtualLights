@@ -20,6 +20,7 @@ private:
 	// Used to validate BRDF sets
 	uint32_t numAngles;
 	uint32_t numCoefficientsPerAngle;
+	uint32_t numCoefficientsCosTermPerAngle;
 
 	const GfxAllocContext* gfxAllocContext;
 

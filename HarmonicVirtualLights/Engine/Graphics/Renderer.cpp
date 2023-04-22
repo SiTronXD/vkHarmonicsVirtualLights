@@ -226,6 +226,27 @@ void Renderer::createCamUbo()
 	);
 }
 
+void Renderer::addShCoefficients(
+	const std::vector<std::vector<RGB>>& shCoeffs, 
+	std::vector<SHData>& outputShSets)
+{
+	// For each angle
+	for (size_t j = 0; j < shCoeffs.size(); ++j)
+	{
+		// For each coefficient
+		SHData newShData{};
+		for (size_t k = 0; k < shCoeffs[j].size(); ++k)
+		{
+			for (uint32_t n = 0; n < 3; ++n)
+			{
+				newShData.coefficients[k * 3 + n] = shCoeffs[j][k].rgb[n]; // R0 G0 B0 R1 G1 B1 R2 G2 B2
+			}
+		}
+
+		outputShSets.push_back(newShData);
+	}
+}
+
 void Renderer::createShCoefficientBuffer(Scene& scene)
 {
 	std::vector<SHData> shSets;
@@ -233,24 +254,15 @@ void Renderer::createShCoefficientBuffer(Scene& scene)
 	// For each BRDF data within a material
 	for (size_t i = 0; i < this->resourceManager->getNumBRDFs(); ++i)
 	{
-		const std::vector<std::vector<RGB>>& shCoeffs = 
-			this->resourceManager->getBRDFData(i).getShCoefficientSets();
-
-		// For each angle
-		for (size_t j = 0; j < shCoeffs.size(); ++j)
-		{
-			// For each coefficient
-			SHData newShData{};
-			for (size_t k = 0; k < shCoeffs[j].size(); ++k)
-			{
-				for (uint32_t n = 0; n < 3; ++n)
-				{
-					newShData.coefficients[k * 3 + n] = shCoeffs[j][k].rgb[n]; // R0 G0 B0 R1 G1 B1 R2 G2 B2
-				}
-			}
-
-			shSets.push_back(newShData);
-		}
+		// R0, G0, B0, R1, G1, B1, RC0, GC0, BC0, RC1, GC1, BC1, ...
+		this->addShCoefficients(
+			this->resourceManager->getBRDFData(i).getShCoefficientSets(), 
+			shSets
+		);
+		this->addShCoefficients(
+			this->resourceManager->getBRDFData(i).getShCoefficientCosSets(),
+			shSets
+		);
 	}
 
 	// Create sh coefficient buffer

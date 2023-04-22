@@ -26,6 +26,7 @@
 #include "GfxResourceManager.h"
 #include "ResourceProcessor.h"
 #include "RSM.h"
+#include "BRDFData.h"
 
 // For imgui
 #include "Vulkan/Legacy/DescriptorPool.h"
@@ -86,6 +87,9 @@ private:
 	void initImgui();
 
 	void createCamUbo();
+	void addShCoefficients(
+		const std::vector<std::vector<RGB>>& shCoeffs, 
+		std::vector<SHData>& outputShSets);
 	void createShCoefficientBuffer(Scene& scene);
 	void createSyncObjects();
 

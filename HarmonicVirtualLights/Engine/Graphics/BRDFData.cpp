@@ -15,14 +15,20 @@ bool BRDFData::createFromFile(const std::string& filePath)
 	std::vector<std::string> splitStringResult;
 	splitStringResult.reserve(5);
 
+	std::vector<std::vector<RGB>>* currentCoeffs = &this->shCoefficients;
+
 	// Read lines
 	std::string line;
 	while (std::getline(brdfFile, line))
 	{
+		// Switch to load in coefficients with cos term
+		if (line.substr(0, 2) == "kc")
+			currentCoeffs = &this->shCoefficientsCosTerm;
+
 		// New set of SH coefficients
 		if (line[0] == 'k')
 		{
-			this->shCoefficients.push_back(std::vector<RGB>());
+			currentCoeffs->push_back(std::vector<RGB>());
 		}
 		// New coefficient
 		else if(line.size() != 0)
@@ -39,8 +45,8 @@ bool BRDFData::createFromFile(const std::string& filePath)
 				std::stod(splitStringResult[2])
 			};
 
-			uint32_t currentShIndex = uint32_t(this->shCoefficients.size()) - 1;
-			this->shCoefficients[currentShIndex].push_back(newCoefficient);
+			uint32_t currentShIndex = uint32_t(currentCoeffs->size()) - 1;
+			(*currentCoeffs)[currentShIndex].push_back(newCoefficient);
 		}
 	}
 
