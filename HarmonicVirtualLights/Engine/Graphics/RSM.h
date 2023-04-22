@@ -24,7 +24,7 @@ private:
 public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat NORMAL_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
-	static const VkFormat BRDF_INDEX_FORMAT = VK_FORMAT_R8G8B8A8_UINT;
+	static const VkFormat BRDF_INDEX_FORMAT = VK_FORMAT_R8_UINT;
 
 	RSM();
 

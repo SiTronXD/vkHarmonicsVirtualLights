@@ -13,12 +13,6 @@ layout(binding = 1) uniform LightCamUBO
 layout(binding = 2) uniform sampler2D brdfLutTex;
 layout(binding = 3) uniform samplerCube prefilterMap;
 
-layout(binding = 4) uniform sampler2D rsmDepthTex;
-
-layout(binding = 5) uniform sampler2D albedoTex;
-layout(binding = 6) uniform sampler2D roughnessTex;
-layout(binding = 7) uniform sampler2D metallicTex;
-
 #define MAX_L 6
 #define NUM_SH_COEFFICIENTS ((MAX_L + 1) * (MAX_L + 1))
 #define NUM_SHADER_SH_COEFFS (NUM_SH_COEFFICIENTS * 3)
@@ -26,10 +20,20 @@ struct SHData
 {
 	float coeffs[((NUM_SHADER_SH_COEFFS + 3) / 4) * 4];
 };
-layout(binding = 8) readonly buffer SHCoefficientsBuffer
+layout(binding = 4) readonly buffer SHCoefficientsBuffer
 {
 	SHData coefficientSets[];
 } shCoefficients;
+
+layout(binding = 5) uniform sampler2D rsmDepthTex;
+layout(binding = 6) uniform sampler2D rsmPositionTex;
+layout(binding = 7) uniform sampler2D rsmNormalTex;
+layout(binding = 8) uniform sampler2D rsmBRDFIndexTex;
+
+layout(binding = 9) uniform sampler2D albedoTex;
+layout(binding = 10) uniform sampler2D roughnessTex;
+layout(binding = 11) uniform sampler2D metallicTex;
+
 
 layout(location = 0) in vec3 fragNormal;
 layout(location = 1) in vec3 fragWorldPos;
@@ -138,6 +142,23 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
 	return F0 + (max(vec3(1.0f - roughness), F0) - F0) * pow(clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
+}
+
+vec3 getHVLColor()
+{
+	vec3 color = vec3(0.0f);
+
+	const uint rsmSize = uint(lightCamUbo.pos.w);
+
+	for(uint y = 0; y < rsmSize; ++y)
+	{
+		for(uint x = 0; x < rsmSize; ++x)
+		{
+			vec2 uv = (vec2(float(x), float(y)) + vec2(0.5f)) / float(rsmSize);
+		}
+	}
+
+	return color;
 }
 
 float getShadowFactor()

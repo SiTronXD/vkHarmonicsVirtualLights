@@ -630,17 +630,58 @@ void Renderer::recordCommandBuffer(
 		// End rendering
 		commandBuffer.endRendering();
 
-		// Rsm depth transition
-		commandBuffer.memoryBarrier(
-			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			VK_ACCESS_SHADER_READ_BIT,
-			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			this->rsm.getDepthTexture().getVkImage(),
-			VK_IMAGE_ASPECT_DEPTH_BIT
-		);
+		// Transition layouts for RSM render targets
+		std::array<VkImageMemoryBarrier2, 4> rsmEndMemoryBarriers =
+		{
+			// Position
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				this->rsm.getPositionTexture().getVkImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT
+			),
+
+			// Normal
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				this->rsm.getNormalTexture().getVkImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT
+			),
+
+			// Brdf index
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				this->rsm.getBrdfIndexTexture().getVkImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT
+			),
+
+			// Depth
+			PipelineBarrier::imageMemoryBarrier2(
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				this->rsm.getDepthTexture().getVkImage(),
+				VK_IMAGE_ASPECT_DEPTH_BIT
+			)
+		};
+		commandBuffer.memoryBarrier(rsmEndMemoryBarriers.data(), uint32_t(rsmEndMemoryBarriers.size()));
 	}
 
 	// Dynamic viewport
@@ -761,11 +802,37 @@ void Renderer::recordCommandBuffer(
 			prefilteredImageInfo.sampler = prefilteredEnvMap->getVkSampler();
 
 			// Binding 4
+			VkDescriptorBufferInfo shCoeffSboInfo{};
+			shCoeffSboInfo.buffer = this->shCoefficientBuffer.getVkBuffer();
+			shCoeffSboInfo.range = this->shCoefficientBuffer.getBufferSize();
+
+			// Binding 5
 			const Texture& rsmDepthTex = this->rsm.getDepthTexture();
 			VkDescriptorImageInfo rsmDepthImageInfo{};
 			rsmDepthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			rsmDepthImageInfo.imageView = rsmDepthTex.getVkImageView();
 			rsmDepthImageInfo.sampler = rsmDepthTex.getVkSampler();
+			
+			// Binding 6
+			const Texture& rsmPositionTex = this->rsm.getPositionTexture();
+			VkDescriptorImageInfo rsmPositionImageInfo{};
+			rsmPositionImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			rsmPositionImageInfo.imageView = rsmPositionTex.getVkImageView();
+			rsmPositionImageInfo.sampler = rsmPositionTex.getVkSampler();
+
+			// Binding 7
+			const Texture& rsmNormalTex = this->rsm.getNormalTexture();
+			VkDescriptorImageInfo rsmNormalImageInfo{};
+			rsmNormalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			rsmNormalImageInfo.imageView = rsmNormalTex.getVkImageView();
+			rsmNormalImageInfo.sampler = rsmNormalTex.getVkSampler();
+
+			// Binding 8
+			const Texture& rsmBRDFTex = this->rsm.getNormalTexture();
+			VkDescriptorImageInfo rsmBRDFImageInfo{};
+			rsmBRDFImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			rsmBRDFImageInfo.imageView = rsmBRDFTex.getVkImageView();
+			rsmBRDFImageInfo.sampler = rsmBRDFTex.getVkSampler();
 
 			VkDescriptorImageInfo albedoImageInfo{};
 			albedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -774,12 +841,7 @@ void Renderer::recordCommandBuffer(
 			VkDescriptorImageInfo metallicImageInfo{};
 			metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			// Binding 8
-			VkDescriptorBufferInfo shCoeffSboInfo{};
-			shCoeffSboInfo.buffer = this->shCoefficientBuffer.getVkBuffer();
-			shCoeffSboInfo.range = this->shCoefficientBuffer.getBufferSize();
-
-			std::array<VkWriteDescriptorSet, 9> writeDescriptorSets
+			std::array<VkWriteDescriptorSet, 12> writeDescriptorSets
 			{
 				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
 				DescriptorSet::writeBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightCamUboInfo),
@@ -787,13 +849,16 @@ void Renderer::recordCommandBuffer(
 				DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &brdfImageInfo),
 				DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &prefilteredImageInfo),
 
-				DescriptorSet::writeImage(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
+				DescriptorSet::writeBuffer(4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &shCoeffSboInfo),
 
-				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-				DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-				DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
+				DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmPositionImageInfo),
+				DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmNormalImageInfo),
+				DescriptorSet::writeImage(8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmBRDFImageInfo),
 
-				DescriptorSet::writeBuffer(8, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &shCoeffSboInfo)
+				DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
+				DescriptorSet::writeImage(11, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
 			};
 
 			// Loop through entities with mesh components
@@ -814,28 +879,28 @@ void Renderer::recordCommandBuffer(
 						numPipelineSwitches++;
 					}
 
-					// Binding 5
+					// Binding 9
 					const Texture* albedoTexture =
 						this->resourceManager->getTexture(material.albedoTextureId);
 					albedoImageInfo.imageView = albedoTexture->getVkImageView();
 					albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
-					// Binding 6
+					// Binding 10
 					const Texture* roughnessTexture =
 						this->resourceManager->getTexture(material.roughnessTextureId);
 					roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
 					roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
 
-					// Binding 7
+					// Binding 11
 					const Texture* metallicTexture =
 						this->resourceManager->getTexture(material.metallicTextureId);
 					metallicImageInfo.imageView = metallicTexture->getVkImageView();
 					metallicImageInfo.sampler = metallicTexture->getVkSampler();
 
 					// Push descriptor set update
-					writeDescriptorSets[5].pImageInfo = &albedoImageInfo;
-					writeDescriptorSets[6].pImageInfo = &roughnessImageInfo;
-					writeDescriptorSets[7].pImageInfo = &metallicImageInfo;
+					writeDescriptorSets[9].pImageInfo = &albedoImageInfo;
+					writeDescriptorSets[10].pImageInfo = &roughnessImageInfo;
+					writeDescriptorSets[11].pImageInfo = &metallicImageInfo;
 					commandBuffer.pushDescriptorSet(
 						this->gfxResManager.getGraphicsPipelineLayout(),
 						0,

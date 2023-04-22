@@ -28,6 +28,35 @@ void GpuProperties::updateProperties(
 	}
 }
 
+bool GpuProperties::isFormatSupported(
+	VkFormat format, 
+	VkImageTiling tiling, 
+	VkFormatFeatureFlags features)
+{
+	// Get format properties for format
+	VkFormatProperties props;
+	vkGetPhysicalDeviceFormatProperties(
+		*GpuProperties::physicalDevice,
+		format,
+		&props
+	);
+
+	// Check for linear tiling
+	if (tiling == VK_IMAGE_TILING_LINEAR &&
+		(props.linearTilingFeatures & features) == features)
+	{
+		return true;
+	}
+	// Check for optimal tiling
+	else if (tiling == VK_IMAGE_TILING_OPTIMAL &&
+		(props.optimalTilingFeatures & features) == features)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 VkFormat GpuProperties::findSupportedFormat(
 	const std::vector<VkFormat>& candidates, 
 	VkImageTiling tiling, 

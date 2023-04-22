@@ -57,6 +57,10 @@ public:
 	static const inline uint32_t& getMemoryTypeCount() { return memoryTypeCount; }
 	static const inline VkMemoryType& getMemoryType(const uint32_t& index) { return memoryTypes[index]; }
 
+	static bool isFormatSupported(
+		VkFormat format,
+		VkImageTiling tiling,
+		VkFormatFeatureFlags features);
 	static VkFormat findSupportedFormat(
 		const std::vector<VkFormat>& candidates,
 		VkImageTiling tiling,

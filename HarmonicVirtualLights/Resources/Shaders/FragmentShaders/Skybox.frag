@@ -1,6 +1,6 @@
 #version 450
 
-layout(set = 0, binding = 5) uniform samplerCube cubeSampler;
+layout(set = 0, binding = 9) uniform samplerCube cubeSampler;
 
 layout(location = 0) in vec3 fragPos;
 

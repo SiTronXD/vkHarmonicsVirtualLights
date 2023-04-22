@@ -235,6 +235,15 @@ bool Texture2D::createAsRenderableSampledTexture(
 	VkImageUsageFlagBits extraUsageFlags,
 	const SamplerSettings& samplerSettings)
 {
+	// Check format support
+	if (!GpuProperties::isFormatSupported(
+		format, 
+		VK_IMAGE_TILING_OPTIMAL, 
+		VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+	{
+		Log::error("Format with index " + std::to_string(format) + " is not supported.");
+	}
+
 	bool hasCreatedTexture = this->createAsRenderableTexture(
 		gfxAllocContext,
 		width,
