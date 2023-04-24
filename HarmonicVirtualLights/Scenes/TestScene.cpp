@@ -49,13 +49,20 @@ void TestScene::init()
 	}
 
 	// Walls
+	glm::mat4 wallTransforms[3] =
+	{
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 1.0f, 3.0f)),
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 1.0f)),
+		glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 3.0f))
+	};
+	for(uint32_t i = 0; i < 3; ++i)
 	{
 		uint32_t testEntity = this->createEntity();
 		this->setComponent<MeshComponent>(testEntity, MeshComponent());
 		this->setComponent<Material>(testEntity, Material());
 
 		Transform& transform = this->getComponent<Transform>(testEntity);
-		transform.modelMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+		transform.modelMat = wallTransforms[i];
 
 		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
 		modelMesh.meshId = boxMeshId;
