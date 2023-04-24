@@ -1,8 +1,12 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive: require
+
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
 #define SHADOW_BIAS 0.003f
 #define PI 3.1415926535897932384626433832795
+
+#include "../Common/Sh.glsl"
 
 layout(binding = 1) uniform LightCamUBO 
 {
@@ -144,23 +148,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 	return F0 + (max(vec3(1.0f - roughness), F0) - F0) * pow(clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
 }
 
-vec3 getHVLColor()
-{
-	vec3 color = vec3(0.0f);
-
-	const uint rsmSize = uint(lightCamUbo.pos.w);
-
-	for(uint y = 0; y < rsmSize; ++y)
-	{
-		for(uint x = 0; x < rsmSize; ++x)
-		{
-			vec2 uv = (vec2(float(x), float(y)) + vec2(0.5f)) / float(rsmSize);
-		}
-	}
-
-	return color;
-}
-
 float getShadowFactor()
 {
 	// Transform to light's coordinate space
@@ -264,6 +251,8 @@ void main()
 
 	// TODO: remove this
 	color *= shCoefficients.coefficientSets[0].coeffs[0] > -10.0f ? 1.0f : 0.0f;
+
+	color = getIndirectLight(uint(lightCamUbo.pos.w));
 
 	outColor = vec4(color, 1.0f);
 }

@@ -61,7 +61,7 @@
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuild>
-      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)Resources\shaders\%(Filename)%(Extension).spv</Command>
+      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)Resources\Shaders\%(Filename)%(Extension).spv</Command>
     </CustomBuild>
     <CustomBuild>
       <Outputs>%(Filename)%(Extension).spv</Outputs>
@@ -98,7 +98,7 @@
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuild>
-      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)Resources\shaders\%(Filename)%(Extension).spv</Command>
+      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)Resources\Shaders\%(Filename)%(Extension).spv</Command>
     </CustomBuild>
     <CustomBuild>
       <Outputs>%(Filename)%(Extension).spv</Outputs>
