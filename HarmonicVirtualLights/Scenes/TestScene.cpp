@@ -23,7 +23,7 @@ void TestScene::init()
 	);
 
 	uint32_t brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
-	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/white-fabric.shbrdf");
+	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/red-fabric.shbrdf");
 
 	uint32_t sphereMeshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj");
 	uint32_t boxMeshId = this->getResourceManager().addMesh("Resources/Models/box.obj");

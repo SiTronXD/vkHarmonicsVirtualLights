@@ -2,8 +2,7 @@
 #include "RSM.h"
 
 RSM::RSM()
-	: shadowMapSize(0),
-	position(1.0f),
+	: position(1.0f),
 	projectionMatrix(1.0f),
 	viewMatrix(1.0f)
 {
@@ -11,24 +10,22 @@ RSM::RSM()
 
 void RSM::init(const GfxAllocContext& gfxAllocContext)
 {
-	this->shadowMapSize = 256;
-
 	this->positionTexture.createAsRenderableSampledTexture(
 		gfxAllocContext, 
-		this->shadowMapSize,
-		this->shadowMapSize,
+		RSM::TEX_SIZE,
+		RSM::TEX_SIZE,
 		RSM::POSITION_FORMAT
 	);
 	this->normalTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
-		this->shadowMapSize,
-		this->shadowMapSize,
+		RSM::TEX_SIZE,
+		RSM::TEX_SIZE,
 		RSM::NORMAL_FORMAT
 	);
 	this->brdfIndexTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
-		this->shadowMapSize,
-		this->shadowMapSize,
+		RSM::TEX_SIZE,
+		RSM::TEX_SIZE,
 		RSM::BRDF_INDEX_FORMAT
 	);
 	/*this->emissionFunctionTexture.createAsRenderableSampledTexture(
@@ -40,8 +37,8 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 	);*/
 	this->depthTexture.createAsDepthSampledTexture(
 		gfxAllocContext,
-		this->shadowMapSize,
-		this->shadowMapSize
+		RSM::TEX_SIZE,
+		RSM::TEX_SIZE
 	);
 
 	// Cam ubo
@@ -68,7 +65,7 @@ void RSM::update()
 	// Update cam buffer
 	CamUBO ubo{};
 	ubo.vp = this->projectionMatrix * this->viewMatrix;
-	ubo.pos = glm::vec4(this->position, (float) this->shadowMapSize);
+	ubo.pos = glm::vec4(this->position, (float) RSM::TEX_SIZE);
 	this->camUbo.updateBuffer(&ubo);
 }
 

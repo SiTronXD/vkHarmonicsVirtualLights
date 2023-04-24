@@ -19,20 +19,17 @@ private:
 
 	glm::vec3 position;
 
-	uint32_t shadowMapSize;
-
 public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat NORMAL_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat BRDF_INDEX_FORMAT = VK_FORMAT_R8_UINT;
+	static const uint32_t TEX_SIZE = 8;
 
 	RSM();
 
 	void init(const GfxAllocContext& gfxAllocContext);
 	void update();
 	void cleanup();
-
-	inline uint32_t getSize() const { return this->shadowMapSize; }
 
 	inline const Texture2D& getPositionTexture() const { return this->positionTexture; }
 	inline const Texture2D& getNormalTexture() const { return this->normalTexture; }

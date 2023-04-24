@@ -1,24 +1,13 @@
 # Harmonic Virtual Lights
 An implementation of the HVL algorithm for my bachelor thesis project.
 
-# TODO:
-
-# Done:
-* Resource manager for meshes and textures
-* Scene management
-* Dynamic rendering
-* Push descriptors
-* Utilize synchronization 2 for pipeline barriers
-* Use EnTT
-* PBR (direct light)
-* Post-process pass for tonemapping + gamma correction
-* Basic material system for pipelines
-* HDR environment map
-* Load cube map from single texture
-* PBR (indirect specular from IBL)
-* Use VMA
-* Refactor (skybox, brdf lut and prefilter creation, texture2D/cube, pbr textures)
-* Move project to it's own repo
+# TODO:TODO:
+* HVL/HVLs distinction in report
+* Examples of anisotropic/isotropic materials in report
+* Double check polar/azimuthal angles and world-to-tangent-space transforms
+* "TODO: fix edge case where normal == viewDir" in tangent space transform
+* NUM_ANGLES should be 90 in the final version
+* Try unrolling associated legendre polynomials
 
 # Vulkan features used
 * Version 1.3

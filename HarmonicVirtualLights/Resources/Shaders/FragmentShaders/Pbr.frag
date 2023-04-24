@@ -4,7 +4,6 @@
 
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
 #define SHADOW_BIAS 0.003f
-#define PI 3.1415926535897932384626433832795
 
 #include "../Common/Sh.glsl"
 
@@ -17,23 +16,6 @@ layout(binding = 1) uniform LightCamUBO
 layout(binding = 2) uniform sampler2D brdfLutTex;
 layout(binding = 3) uniform samplerCube prefilterMap;
 
-#define MAX_L 6
-#define NUM_SH_COEFFICIENTS ((MAX_L + 1) * (MAX_L + 1))
-#define NUM_SHADER_SH_COEFFS (NUM_SH_COEFFICIENTS * 3)
-struct SHData
-{
-	float coeffs[((NUM_SHADER_SH_COEFFS + 3) / 4) * 4];
-};
-layout(binding = 4) readonly buffer SHCoefficientsBuffer
-{
-	SHData coefficientSets[];
-} shCoefficients;
-
-layout(binding = 5) uniform sampler2D rsmDepthTex;
-layout(binding = 6) uniform sampler2D rsmPositionTex;
-layout(binding = 7) uniform sampler2D rsmNormalTex;
-layout(binding = 8) uniform sampler2D rsmBRDFIndexTex;
-
 layout(binding = 9) uniform sampler2D albedoTex;
 layout(binding = 10) uniform sampler2D roughnessTex;
 layout(binding = 11) uniform sampler2D metallicTex;
@@ -44,6 +26,7 @@ layout(location = 1) in vec3 fragWorldPos;
 layout(location = 2) in vec3 camPos;
 layout(location = 3) in vec2 fragTexCoord;
 layout(location = 4) in vec2 materialProperties;
+layout(location = 5) flat in uint fragBrdfIndex;
 
 layout(location = 0) out vec4 outColor;
 
@@ -189,7 +172,7 @@ void main()
 
 	vec3 N = normalize(fragNormal);
 	vec3 V = normalize(camPos - fragWorldPos);
-	vec3 R = reflect(-V, N);
+	/*vec3 R = reflect(-V, N);
 	vec3 albedo = srgbToLinear(texture(albedoTex, fragTexCoord).rgb);
 	float roughness = texture(roughnessTex, fragTexCoord).r * materialProperties.x;
 	float metallic = texture(metallicTex, fragTexCoord).r * materialProperties.y;
@@ -247,12 +230,10 @@ void main()
 	// No IBL
 	ambient = vec3(0.0f);
 
-	vec3 color = ambient + Lo;
+	vec3 color = ambient + Lo;*/
 
-	// TODO: remove this
-	color *= shCoefficients.coefficientSets[0].coeffs[0] > -10.0f ? 1.0f : 0.0f;
-
-	color = getIndirectLight(uint(lightCamUbo.pos.w));
+	// Output only indirect light
+	vec3 color = getIndirectLight(fragTexCoord, fragWorldPos, lightPos, N, V, uint(lightCamUbo.pos.w), fragBrdfIndex);
 
 	outColor = vec4(color, 1.0f);
 }

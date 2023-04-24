@@ -22,6 +22,7 @@ layout(location = 1) out vec3 fragWorldPos;
 layout(location = 2) out vec3 camPos;
 layout(location = 3) out vec2 fragTexCoord;
 layout(location = 4) out vec2 materialProperties;
+layout(location = 5) out uint fragBrdfIndex;
 
 void main()
 {
@@ -34,4 +35,5 @@ void main()
 	camPos = ubo.pos.xyz;
 	fragTexCoord = inTexCoord;
 	materialProperties = pc.materialProperties.xy;
+	fragBrdfIndex = pc.brdfProperties.x;
 }

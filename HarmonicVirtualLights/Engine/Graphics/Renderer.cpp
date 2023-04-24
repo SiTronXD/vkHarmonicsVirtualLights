@@ -441,7 +441,7 @@ void Renderer::recordCommandBuffer(
 
 	// ---------- Render scene to RSM ----------
 	{
-		VkExtent2D rsmExtent{ this->rsm.getSize(), this->rsm.getSize() };
+		VkExtent2D rsmExtent{ RSM::TEX_SIZE, RSM::TEX_SIZE };
 
 		// Viewport
 		float swapchainHeight = (float) rsmExtent.height;
@@ -516,7 +516,7 @@ void Renderer::recordCommandBuffer(
 		// Clear values for color and depth
 		std::array<VkClearValue, 4> clearValues{};
 		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[1].color = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+		clearValues[1].color = { { 64.0f, 64.0f, 64.0f, 1.0f } };
 		clearValues[2].color.uint32[0] = 0u; clearValues[2].color.uint32[1] = 0u; clearValues[2].color.uint32[2] = 0u; clearValues[2].color.uint32[3] = 0u;
 		clearValues[3].depthStencil = { 1.0f, 0 };
 
