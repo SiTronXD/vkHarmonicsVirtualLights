@@ -6,7 +6,6 @@
 #include <imgui/imgui.h>
 
 TestScene::TestScene()
-	: testEntity(~0u)
 {
 }
 
@@ -22,92 +21,54 @@ void TestScene::init()
 	this->getRenderer().setSkyboxTexture(
 		this->getResourceManager().addCubeMap({ "Resources/Textures/grace_cross.hdr" })
 	);
-	/*this->getRenderer().setSkyboxTexture(
-		this->getResourceManager().addCubeMap(
-			{
-				"Resources/Textures/graceCathedral_Right.png",
-				"Resources/Textures/graceCathedral_Left.png",
-				"Resources/Textures/graceCathedral_Top.png",
-				"Resources/Textures/graceCathedral_Bottom.png",
-				"Resources/Textures/graceCathedral_Front.png",
-				"Resources/Textures/graceCathedral_Back.png"
-			}
-		)
-	);*/
 
 	uint32_t brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
 	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/white-fabric.shbrdf");
 
-	uint32_t meshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj");
-	//uint32_t meshId = this->getResourceManager().addMesh("Resources/Models/suzanne.obj");
-	uint32_t albedoTextureId = this->getResourceManager().addTexture("Resources/Textures/rustediron-streaks2-bl/rustediron-streaks_basecolor.png");
-	uint32_t roughnessTextureId = this->getResourceManager().addTexture("Resources/Textures/rustediron-streaks2-bl/rustediron-streaks_roughness.png");
-	uint32_t metallicTextureId = this->getResourceManager().addTexture("Resources/Textures/rustediron-streaks2-bl/rustediron-streaks_metallic.png");
+	uint32_t sphereMeshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj");
+	uint32_t boxMeshId = this->getResourceManager().addMesh("Resources/Models/box.obj");
+	uint32_t whiteTextureId = this->getResourceManager().addTexture("Resources/Textures/white.png");
 
-	// Test entity, modifiable material properties through imgui
+	// Test entity
 	{
-		this->testEntity = this->createEntity();
-		this->setComponent<MeshComponent>(this->testEntity, MeshComponent());
-		this->setComponent<Material>(this->testEntity, Material());
+		uint32_t testEntity = this->createEntity();
+		this->setComponent<MeshComponent>(testEntity, MeshComponent());
+		this->setComponent<Material>(testEntity, Material());
 
-		Transform& transform = this->getComponent<Transform>(this->testEntity);
-		transform.modelMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+		Transform& transform = this->getComponent<Transform>(testEntity);
+		transform.modelMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
-		MeshComponent& modelMesh = this->getComponent<MeshComponent>(this->testEntity);
-		modelMesh.meshId = meshId;
+		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
+		modelMesh.meshId = sphereMeshId;
 
-		Material& material = this->getComponent<Material>(this->testEntity);
-		material.albedoTextureId = albedoTextureId;
-		material.roughnessTextureId = roughnessTextureId;
-		material.metallicTextureId = metallicTextureId;
+		Material& material = this->getComponent<Material>(testEntity);
+		material.albedoTextureId = whiteTextureId;
+		material.roughnessTextureId = whiteTextureId;
+		material.metallicTextureId = whiteTextureId;
 		material.brdfId = brdfId0;
 	}
 
-	// Add objects with varying properties
-	int maxX = 5;
-	int maxY = 5;
-	for (int y = 0; y < maxY; ++y)
+	// Walls
 	{
-		for (int x = 0; x < maxX; ++x)
-		{
-			Material newMat{};
-			newMat.roughness = (float) x / (float) (maxX - 1);
-			newMat.metallic = (float) y / (float) (maxY - 1);
-			newMat.albedoTextureId = albedoTextureId;
-			newMat.roughnessTextureId = roughnessTextureId;
-			newMat.metallicTextureId = metallicTextureId;
-			newMat.brdfId = brdfId1;
+		uint32_t testEntity = this->createEntity();
+		this->setComponent<MeshComponent>(testEntity, MeshComponent());
+		this->setComponent<Material>(testEntity, Material());
 
-			uint32_t newEntity = this->createEntity();
-			this->setComponent<MeshComponent>(newEntity, MeshComponent());
-			this->setComponent<Material>(newEntity, newMat);
+		Transform& transform = this->getComponent<Transform>(testEntity);
+		transform.modelMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
-			Transform& transform = this->getComponent<Transform>(newEntity);
-			transform.modelMat = 
-				glm::translate(glm::mat4(1.0f), glm::vec3(x - maxX / 2, y - maxY / 2, 0.0f)) * 
-				glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
+		modelMesh.meshId = boxMeshId;
 
-			MeshComponent& modelMesh = this->getComponent<MeshComponent>(newEntity);
-			modelMesh.meshId = meshId;
-		}
+		Material& material = this->getComponent<Material>(testEntity);
+		material.albedoTextureId = whiteTextureId;
+		material.roughnessTextureId = whiteTextureId;
+		material.metallicTextureId = whiteTextureId;
+		material.brdfId = brdfId1;
 	}
 }
 
 void TestScene::update()
 {
 	this->camera.update();
-
-	// Modifiable material for test entity
-	Material& mat = this->getComponent<Material>(this->testEntity);
-
-	float roughness = mat.roughness;
-	float metallic = mat.metallic;
-
-	ImGui::Begin("Material");
-	ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f);
-	ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f);
-	ImGui::End();
-
-	mat.roughness = roughness;
-	mat.metallic = metallic;
 }

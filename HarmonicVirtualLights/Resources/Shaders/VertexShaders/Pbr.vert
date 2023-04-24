@@ -25,10 +25,11 @@ layout(location = 4) out vec2 materialProperties;
 
 void main()
 {
-	vec4 worldPos = pc.modelMat * vec4(inPosition, 1.0);
+	vec4 worldPos = pc.modelMat * vec4(inPosition, 1.0f);
+	vec3 worldNormal = (pc.modelMat * vec4(inNormal, 0.0f)).xyz;
 
 	gl_Position = ubo.vp * worldPos;
-	fragNormal = inNormal;
+	fragNormal = worldNormal;
 	fragWorldPos = worldPos.xyz;
 	camPos = ubo.pos.xyz;
 	fragTexCoord = inTexCoord;

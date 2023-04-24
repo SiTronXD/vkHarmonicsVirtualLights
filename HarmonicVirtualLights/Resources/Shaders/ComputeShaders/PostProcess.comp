@@ -44,6 +44,7 @@ void main()
 
 	// Load HDR color
 	vec3 color = imageLoad(hdrImage, ivec2(index)).rgb;
+	color = max(color, vec3(0.0f));
 	
 	// Tone mapping and gamma correction
 	color = toneMap(color);

@@ -5,8 +5,7 @@
 class TestScene : public Scene
 {
 private:
-	uint32_t testEntity;
-
+	
 public:
 	TestScene();
 	~TestScene();
