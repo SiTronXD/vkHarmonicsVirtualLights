@@ -23,7 +23,7 @@ public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat NORMAL_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat BRDF_INDEX_FORMAT = VK_FORMAT_R8_UINT;
-	static const uint32_t TEX_SIZE = 8;
+	static const uint32_t TEX_SIZE = 12;
 
 	RSM();
 

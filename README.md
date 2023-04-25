@@ -6,10 +6,11 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Examples of anisotropic/isotropic materials in report
 * Double check polar/azimuthal angles and world-to-tangent-space transforms
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
-* NUM_ANGLES should be 90 in the final version
 * Try unrolling associated legendre polynomials
 * Optimize factorials
 * Remove repeating terms (specifically in getCoeffL)
+* Direct lighting and spotlight fade at edges
+* Use storage images instead of sampled images
 
 # Vulkan features used
 * Version 1.3

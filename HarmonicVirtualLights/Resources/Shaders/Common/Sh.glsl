@@ -24,7 +24,7 @@ layout(binding = 4) readonly buffer SHCoefficientsBuffer
 layout(binding = 5) uniform sampler2D rsmDepthTex;
 layout(binding = 6) uniform sampler2D rsmPositionTex;
 layout(binding = 7) uniform sampler2D rsmNormalTex;
-layout(binding = 8) uniform sampler2D rsmBRDFIndexTex;
+layout(binding = 8) uniform usampler2D rsmBRDFIndexTex;
 
 int factorial(int v)
 {
@@ -232,7 +232,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 
             // HVL cache
             vec3 hvlPos = texture(rsmPositionTex, uv).rgb;
-            uint yBrdfIndex = uint(texture(rsmBRDFIndexTex, uv).r + 0.5f);
+            uint yBrdfIndex = texture(rsmBRDFIndexTex, uv).r;
 
             // HVL data
             vec3 wLight = hvlPos - worldPos;
@@ -276,7 +276,6 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             // Add "Lj(L * F)" from each HVL
             vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex);
             color += Lj * dotLF;
-            //color += Lj;
 
             // Visualize HVL sizes
             //color += hvlDistance <= hvlRadius ? vec3(0.1f, 0.0f, 0.0f) : vec3(0.0f);

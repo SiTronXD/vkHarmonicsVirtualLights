@@ -10,23 +10,32 @@ RSM::RSM()
 
 void RSM::init(const GfxAllocContext& gfxAllocContext)
 {
+	SamplerSettings samplerSettings{};
+	samplerSettings.filter = VK_FILTER_NEAREST;
+
 	this->positionTexture.createAsRenderableSampledTexture(
 		gfxAllocContext, 
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE,
-		RSM::POSITION_FORMAT
+		RSM::POSITION_FORMAT,
+		(VkImageUsageFlagBits) 0,
+		samplerSettings
 	);
 	this->normalTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE,
-		RSM::NORMAL_FORMAT
+		RSM::NORMAL_FORMAT,
+		(VkImageUsageFlagBits)0,
+		samplerSettings
 	);
 	this->brdfIndexTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE,
-		RSM::BRDF_INDEX_FORMAT
+		RSM::BRDF_INDEX_FORMAT,
+		(VkImageUsageFlagBits)0,
+		samplerSettings
 	);
 	/*this->emissionFunctionTexture.createAsRenderableSampledTexture(
 		gfxAllocContext,
@@ -46,7 +55,7 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		gfxAllocContext,
 		sizeof(CamUBO)
 	);
-	this->position = glm::vec3(2.0f, 2.0f, 2.0f);
+	this->position = glm::vec3(2.0f, 2.0f, 2.0f) * 0.7f;
 	this->projectionMatrix = glm::perspective(
 		glm::radians(90.0f),
 		1.0f,

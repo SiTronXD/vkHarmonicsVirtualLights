@@ -828,7 +828,7 @@ void Renderer::recordCommandBuffer(
 			rsmNormalImageInfo.sampler = rsmNormalTex.getVkSampler();
 
 			// Binding 8
-			const Texture& rsmBRDFTex = this->rsm.getNormalTexture();
+			const Texture& rsmBRDFTex = this->rsm.getBrdfIndexTexture();
 			VkDescriptorImageInfo rsmBRDFImageInfo{};
 			rsmBRDFImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			rsmBRDFImageInfo.imageView = rsmBRDFTex.getVkImageView();
