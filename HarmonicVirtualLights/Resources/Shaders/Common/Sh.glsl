@@ -210,21 +210,10 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 
     float fRsmSize = float(rsmSize);
 
-    // Tangent vectors
-    /*vec3 tangentRight = normalize(cross(normal, viewDir)); // TODO: fix edge case where normal == viewDir
-    vec3 tangentForward = cross(tangentRight, normal);
-    mat3x3 worldToTangentMat = transpose(mat3x3(tangentRight, normal, tangentForward));*/
+    // Transform matrix per shaded point
     mat3x3 worldToTangentMat = getWorldToTangentMat(normal, viewDir);
 
     // Obtain coefficient vector F (with cosine term)
-    /*const float cosAngle = dot(normal, viewDir);
-    const float angle = acos(clamp(cosAngle, 0.0f, 1.0f));
-    const int angleIndex = clamp(
-        int(angle / HALF_PI * float(NUM_ANGLES)), 
-        0, 
-        NUM_ANGLES - 1
-    );
-    const SHData F = shCoefficients.coefficientSets[xBrdfIndex * NUM_ANGLES * 2 + NUM_ANGLES + angleIndex];*/
     const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
     
     // Loop through each HVL
@@ -260,7 +249,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             // Pythagorean identities
             float sinA = abs(hvlRadius / hvlDistance);
             float alpha = float(sqrt(clamp(1.0f - sinA*sinA, 0.0f, 1.0f))); // alpha = cos(a)
-            float halfAngle = acos(clamp(alpha, -1.0f, 1.0f));
+            float halfAngle = acos(clamp(alpha, 0.0f, 1.0f)); // TODO: check if this clamping range is correct (because of potential -sqrt)
 
             // Relative light direction
             vec3 wLightTangentSpace = worldToTangentMat * wLight;
@@ -287,6 +276,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             // Add "Lj(L * F)" from each HVL
             vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex);
             color += Lj * dotLF;
+            //color += Lj;
 
             // Visualize HVL sizes
             //color += hvlDistance <= hvlRadius ? vec3(0.1f, 0.0f, 0.0f) : vec3(0.0f);
