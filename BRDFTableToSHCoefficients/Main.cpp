@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}*/
 
-	const int n = 16;
+	const int n = 90;
 	const int MAX_L = 6;
 	const int NUM_SH_COEFFS = (MAX_L + 1) * (MAX_L + 1);
 

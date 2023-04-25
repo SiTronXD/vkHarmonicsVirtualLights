@@ -6,7 +6,7 @@
 #define RSM_FOV (HALF_PI)
 #define PRIMARY_LIGHT_POWER 1000.0f
 
-#define NUM_ANGLES 16
+#define NUM_ANGLES 90
 #define MAX_L 6
 #define CONVOLUTION_L 4
 #define HVL_EMISSION_L 2
@@ -134,6 +134,7 @@ float getH(float halfAngle, vec3 xNormal, vec3 wj)
     angle = clamp(angle, aLowBar, aHighBar);
 
     float x = (aHighBar - angle) / (2.0 * halfAngle);
+    x = clamp(x, 0.0f, 1.0f);
     float s = (3.0 * x * x) - (2.0 * x * x * x); // Smoothstep
 
     return s;
@@ -235,7 +236,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             vec3 hvlNormal = texture(rsmNormalTex, uv).rgb;
 
             // This texel does not contain a valid HVL
-            if(dot(hvlNormal, hvlNormal) > 64.0f)
+            if(hvlNormal.x > 32.0f)
             {
                 continue;
             }

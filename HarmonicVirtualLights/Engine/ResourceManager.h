@@ -12,7 +12,7 @@ class ResourceManager
 {
 private:
 	// Used to validate BRDF sets
-	const uint32_t NUM_ANGLES = 16;
+	const uint32_t NUM_ANGLES = 90;
 	uint32_t numCoefficientsPerAngle;
 	uint32_t numCoefficientsCosTermPerAngle;
 
