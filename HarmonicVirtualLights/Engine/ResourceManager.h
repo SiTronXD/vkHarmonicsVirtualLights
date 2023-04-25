@@ -11,16 +11,16 @@ struct GfxAllocContext;
 class ResourceManager
 {
 private:
+	// Used to validate BRDF sets
+	const uint32_t NUM_ANGLES = 16;
+	uint32_t numCoefficientsPerAngle;
+	uint32_t numCoefficientsCosTermPerAngle;
+
 	std::unordered_map<std::string, uint32_t> nameToBrdf;
 
 	std::vector<std::shared_ptr<Texture>> textures;
 	std::vector<Mesh> meshes;
 	std::vector<BRDFData> brdfs;
-
-	// Used to validate BRDF sets
-	uint32_t numAngles;
-	uint32_t numCoefficientsPerAngle;
-	uint32_t numCoefficientsCosTermPerAngle;
 
 	const GfxAllocContext* gfxAllocContext;
 

@@ -422,4 +422,7 @@
     <CustomBuild Include="Resources\Shaders\FragmentShaders\Rsm.frag" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\Rsm.vert" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Shaders\Common\Sh.glsl" />
+  </ItemGroup>
 </Project>

@@ -8,6 +8,8 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
 * NUM_ANGLES should be 90 in the final version
 * Try unrolling associated legendre polynomials
+* Optimize factorials
+* Remove repeating terms (specifically in getCoeffL)
 
 # Vulkan features used
 * Version 1.3

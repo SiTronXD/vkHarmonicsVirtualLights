@@ -4,10 +4,12 @@
 #define SQRT_TWO 1.4142135623730950488016887242097
 
 #define RSM_FOV (HALF_PI)
+#define PRIMARY_LIGHT_POWER 1000.0f
 
 #define NUM_ANGLES 16
 #define MAX_L 6
 #define CONVOLUTION_L 4
+#define HVL_EMISSION_L 2
 #define NUM_SH_COEFFICIENTS ((MAX_L + 1) * (MAX_L + 1))
 #define NUM_SHADER_SH_COEFFS (NUM_SH_COEFFICIENTS * 3)
 struct SHData
@@ -97,6 +99,89 @@ float y(int l, int m, float cosTheta, float phi)
     return v;
 }
 
+mat3x3 getWorldToTangentMat(vec3 normal, vec3 approxViewDir)
+{
+    vec3 tangentRight = normalize(cross(normal, approxViewDir)); // TODO: fix edge case where normal == approxViewDir
+    vec3 tangentForward = cross(tangentRight, normal);
+
+    return transpose(mat3x3(tangentRight, normal, tangentForward));
+}
+
+uint getBrdfVectorIndex(vec3 normal, vec3 viewDir, uint brdfIndex)
+{
+    const float cosAngle = dot(normal, viewDir);
+    const float angle = acos(clamp(cosAngle, 0.0f, 1.0f));
+    const int angleIndex = clamp(
+        int(angle / HALF_PI * float(NUM_ANGLES)), 
+        0, 
+        NUM_ANGLES - 1
+    );
+
+    return (brdfIndex * NUM_ANGLES * 2) + (angleIndex);
+}
+
+uint getBrdfCosVectorIndex(vec3 normal, vec3 viewDir, uint brdfIndex)
+{
+    return getBrdfVectorIndex(normal, viewDir, brdfIndex) + NUM_ANGLES;
+}
+
+// Proportion of HVL that lies within shading hemisphere
+float getH(float halfAngle, vec3 xNormal, vec3 wj)
+{
+    float aHighBar = halfAngle + HALF_PI;
+    float aLowBar = halfAngle - HALF_PI;
+    float angle = acos(clamp(dot(xNormal, wj), -1.0f, 1.0f));
+    angle = clamp(angle, aLowBar, aHighBar);
+
+    float x = (aHighBar - angle) / (2.0 * halfAngle);
+    float s = (3.0 * x * x) - (2.0 * x * x * x); // Smoothstep
+
+    return s;
+}
+
+// Geometric factor, corrects energy of spherical shape
+float getG(float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj)
+{
+    float factor = 1.0 / (PI * radius * radius);
+    float dotNjMWj = max(dot(jNormal, mWj), 0.0f);
+    float h = getH(halfAngle, xNormal, -mWj);
+
+    return factor * dotNjMWj * h;
+}
+
+// Incoming luminance from HVL to shaded point
+vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj, vec3 hvlToPrimaryLight, uint yBrdfIndex)
+{
+    float capitalPhi = PRIMARY_LIGHT_POWER / (fRsmSize * fRsmSize);
+    float g = getG(halfAngle, radius, jNormal, xNormal, mWj);
+    
+    // Relative light direction
+    vec3 wLightTangentSpace = getWorldToTangentMat(jNormal, hvlToPrimaryLight) * mWj;
+    float cosThetaWLight = wLightTangentSpace.y;
+    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);
+
+    // Obtain coefficient vector F (without cosine term)
+    const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(jNormal, hvlToPrimaryLight, yBrdfIndex)];
+    vec3 dotFY = vec3(0.0f);
+    for(int lSH = 0; lSH <= HVL_EMISSION_L; ++lSH)
+    {
+        for(int mSH = -lSH; mSH <= lSH; ++mSH)
+        {
+            int index = lSH * (lSH + 1) + mSH;
+            float shBasisFunc = y(lSH, mSH, cosThetaWLight, phiWLight);
+
+            dotFY += 
+                vec3(
+                    FPrime.coeffs[index * 3 + 0],  // R
+                    FPrime.coeffs[index * 3 + 1],  // G
+                    FPrime.coeffs[index * 3 + 2]   // B
+                ) * shBasisFunc;
+        }
+    }
+
+    return dotFY * capitalPhi * g;
+}
+
 float getCoeffLHat(int l, float alpha)
 {
 	if(l == 0)
@@ -107,13 +192,9 @@ float getCoeffLHat(int l, float alpha)
 	return sqrt(PI / float(2u * l + 1u)) * (P(l - 1, 0, alpha) - P(l + 1, 0, alpha));
 }
 
-float getCoeffL(int l, int m, float hvlRadius, float hvlDistance, float cosThetaWLight, float phiWLight)
+float getCoeffL(int l, int m, float alpha, float hvlRadius, float hvlDistance, float cosThetaWLight, float phiWLight)
 {
     // TODO: move out terms which repeats within the same band
-
-    // Pythagorean identities
-    float sinA = abs(hvlRadius / hvlDistance);
-    float alpha = float(sqrt(clamp(1.0f - sinA*sinA, 0.0f, 1.0f)));
 
     float factor = sqrt(4.0 * PI / float(2u * l + 1u));
     float shBasisFunc = y(l, m, cosThetaWLight, phiWLight);
@@ -129,26 +210,26 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
     float fRsmSize = float(rsmSize);
 
     // Tangent vectors
-    vec3 tangentRight = normalize(cross(normal, viewDir)); // TODO: fix edge case where normal == viewDir
+    /*vec3 tangentRight = normalize(cross(normal, viewDir)); // TODO: fix edge case where normal == viewDir
     vec3 tangentForward = cross(tangentRight, normal);
-    mat3x3 worldToTangentMat = transpose(mat3x3(tangentRight, normal, tangentForward));
-    
+    mat3x3 worldToTangentMat = transpose(mat3x3(tangentRight, normal, tangentForward));*/
+    mat3x3 worldToTangentMat = getWorldToTangentMat(normal, viewDir);
+
     // Obtain coefficient vector F (with cosine term)
-    const float cosAngle = dot(normal, viewDir);
+    /*const float cosAngle = dot(normal, viewDir);
     const float angle = acos(clamp(cosAngle, 0.0f, 1.0f));
     const int angleIndex = clamp(
         int(angle / HALF_PI * float(NUM_ANGLES)), 
         0, 
         NUM_ANGLES - 1
     );
-    const SHData F = shCoefficients.coefficientSets[xBrdfIndex * NUM_ANGLES * 2 + NUM_ANGLES + angleIndex];
+    const SHData F = shCoefficients.coefficientSets[xBrdfIndex * NUM_ANGLES * 2 + NUM_ANGLES + angleIndex];*/
+    const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
     
     // Loop through each HVL
 	for(uint y = 0; y < rsmSize; ++y)
-    //for(uint y = 0; y < 1u; ++y)
 	{
 		for(uint x = 0; x < rsmSize; ++x)
-        //for(uint x = 0; x < 1u; ++x)
 		{
 			vec2 uv = (vec2(float(x), float(y)) + vec2(0.5f)) / fRsmSize;
             vec3 hvlNormal = texture(rsmNormalTex, uv).rgb;
@@ -161,14 +242,24 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 
             // HVL cache
             vec3 hvlPos = texture(rsmPositionTex, uv).rgb;
+            uint yBrdfIndex = uint(texture(rsmBRDFIndexTex, uv).r + 0.5f);
 
             // HVL data
             vec3 wLight = hvlPos - worldPos;
-            float d = length(hvlPos - lightPos);
-            float gamma = SQRT_TWO * RSM_FOV / fRsmSize;
-            float hvlRadius = d * (gamma + (gamma * gamma * gamma / 3.0f)); // Taylor series approximation of tan(x)
             float hvlDistance = length(wLight);
             wLight /= hvlDistance;
+
+            vec3 hvlToPrimaryLight = lightPos - hvlPos;
+            float d = length(hvlToPrimaryLight);
+            hvlToPrimaryLight /= d;
+            
+            float gamma = SQRT_TWO * RSM_FOV / fRsmSize;
+            float hvlRadius = d * (gamma + (gamma * gamma * gamma / 3.0f)); // Taylor series approximation of tan(x)
+            
+            // Pythagorean identities
+            float sinA = abs(hvlRadius / hvlDistance);
+            float alpha = float(sqrt(clamp(1.0f - sinA*sinA, 0.0f, 1.0f))); // alpha = cos(a)
+            float halfAngle = acos(clamp(alpha, -1.0f, 1.0f));
 
             // Relative light direction
             vec3 wLightTangentSpace = worldToTangentMat * wLight;
@@ -182,7 +273,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
                 for(int mSH = -lSH; mSH <= lSH; ++mSH)
                 {
                     int index = lSH * (lSH + 1) + mSH;
-                    float Llm = float(getCoeffL(lSH, mSH, hvlRadius, hvlDistance, cosThetaWLight, phiWLight));
+                    float Llm = float(getCoeffL(lSH, mSH, alpha, hvlRadius, hvlDistance, cosThetaWLight, phiWLight));
                     dotLF += 
                         Llm * vec3(
                             F.coeffs[index * 3 + 0],    // R
@@ -193,7 +284,8 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             }
 
             // Add "Lj(L * F)" from each HVL
-            color += dotLF;
+            vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex);
+            color += Lj * dotLF;
 
             // Visualize HVL sizes
             //color += hvlDistance <= hvlRadius ? vec3(0.1f, 0.0f, 0.0f) : vec3(0.0f);

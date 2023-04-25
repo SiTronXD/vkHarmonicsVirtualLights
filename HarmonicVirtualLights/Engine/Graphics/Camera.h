@@ -34,6 +34,9 @@ public:
 	void init(const Window& window);
 	void update();
 
+	void setPosition(const glm::vec3& newPos);
+	void setRotation(float yaw, float pitch);
+
 	inline const glm::mat4& getViewMatrix() const { return this->viewMatrix; }
 	inline const glm::mat4& getProjectionMatrix() const { return this->projectionMatrix; }
 

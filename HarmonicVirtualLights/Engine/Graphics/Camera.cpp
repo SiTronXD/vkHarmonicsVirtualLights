@@ -94,3 +94,14 @@ void Camera::update()
 
 	this->recalculate();
 }
+
+void Camera::setPosition(const glm::vec3& newPos)
+{
+	this->position = newPos;
+}
+
+void Camera::setRotation(float yaw, float pitch)
+{
+	this->yaw = yaw;
+	this->pitch = pitch;
+}

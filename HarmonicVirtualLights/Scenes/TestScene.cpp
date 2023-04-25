@@ -73,6 +73,10 @@ void TestScene::init()
 		material.metallicTextureId = whiteTextureId;
 		material.brdfId = brdfId1;
 	}
+
+	// Initial camera setup
+	this->camera.setPosition(glm::vec3(2.0f, 2.0f, 2.0f));
+	this->camera.setRotation(SMath::PI * 1.25f, -SMath::PI * 0.25f);
 }
 
 void TestScene::update()

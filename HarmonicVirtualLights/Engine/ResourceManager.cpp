@@ -7,7 +7,6 @@
 
 ResourceManager::ResourceManager()
 	: gfxAllocContext(nullptr),
-	numAngles(0),
 	numCoefficientsPerAngle(0),
 	numCoefficientsCosTermPerAngle(0)
 {
@@ -159,25 +158,24 @@ uint32_t ResourceManager::addBRDF(const std::string& filePath)
 	// Create references for validation
 	if (createdBrdfIndex == 0)
 	{
-		this->numAngles = uint32_t(createdBrdf.getShCoefficientSets().size());
 		this->numCoefficientsPerAngle = uint32_t(createdBrdf.getShCoefficientSets()[0].size());
 		this->numCoefficientsCosTermPerAngle = uint32_t(createdBrdf.getShCoefficientCosSets()[0].size());
 	}
 
 	// Validate number of angles
-	if (this->numAngles != uint32_t(createdBrdf.getShCoefficientSets().size()))
+	if (ResourceManager::NUM_ANGLES != uint32_t(createdBrdf.getShCoefficientSets().size()))
 	{
-		Log::error("The number of angles (" + std::to_string(this->numAngles) + ") does not match between all BRDF files.");
+		Log::error("The number of angles (" + std::to_string(ResourceManager::NUM_ANGLES) + ") does not match between all BRDF files.");
 		return 0;
 	}
-	if (this->numAngles != uint32_t(createdBrdf.getShCoefficientCosSets().size()))
+	if (ResourceManager::NUM_ANGLES != uint32_t(createdBrdf.getShCoefficientCosSets().size()))
 	{
-		Log::error("The number of angles (" + std::to_string(this->numAngles) + ") does not match between all BRDF files.");
+		Log::error("The number of angles (" + std::to_string(ResourceManager::NUM_ANGLES) + ") does not match between all BRDF files.");
 		return 0;
 	}
 
 	// Validate number of coefficients within each SH set per angle
-	for (uint32_t i = 0; i < this->numAngles; ++i)
+	for (uint32_t i = 0; i < ResourceManager::NUM_ANGLES; ++i)
 	{
 		// No cos term
 		if (this->numCoefficientsPerAngle != uint32_t(createdBrdf.getShCoefficientSets()[i].size()))
