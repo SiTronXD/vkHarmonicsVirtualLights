@@ -2,8 +2,7 @@
 An implementation of the HVL algorithm for my bachelor thesis project.
 
 # TODO:TODO:
-* HVL/HVLs distinction in report
-* Examples of anisotropic/isotropic materials in report
+* Ethics in report
 * Double check polar/azimuthal angles and world-to-tangent-space transforms
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
 * Try unrolling associated legendre polynomials
