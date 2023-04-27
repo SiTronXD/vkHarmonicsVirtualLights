@@ -4,10 +4,11 @@
 #define SQRT_TWO 1.4142135623730950488016887242097
 
 #define RSM_FOV (HALF_PI)
-#define PRIMARY_LIGHT_POWER 1000.0f
+#define PRIMARY_LIGHT_POWER 100.0f
 
 #define NUM_ANGLES 90
 #define MAX_L 6
+#define DIRECT_CONVOLUTION_L 4
 #define CONVOLUTION_L 4
 #define HVL_EMISSION_L 2
 #define NUM_SH_COEFFICIENTS ((MAX_L + 1) * (MAX_L + 1))
@@ -283,4 +284,41 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 	}
 
 	return color;
+}
+
+vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uint xBrdfIndex)
+{
+    vec3 color = vec3(0.0f);
+
+    vec3 toLight = normalize(lightPos - worldPos);
+
+    // Relative light direction
+    vec3 wLightTangentSpace = getWorldToTangentMat(normal, viewDir) * toLight;
+    float cosThetaWLight = wLightTangentSpace.y;
+    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);
+
+    // Obtain coefficient vector F (with cosine term)
+    // TODO: remove multiple SH set accesses across direct/indirect calculations
+    const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
+    for(int lSH = 0; lSH <= DIRECT_CONVOLUTION_L; ++lSH)
+    {
+        for(int mSH = -lSH; mSH <= lSH; ++mSH)
+        {
+            int index = lSH * (lSH + 1) + mSH;
+            float shBasisFunc = y(lSH, mSH, cosThetaWLight, phiWLight);
+
+            color += 
+                vec3(
+                    F.coeffs[index * 3 + 0],  // R
+                    F.coeffs[index * 3 + 1],  // G
+                    F.coeffs[index * 3 + 2]   // B
+                ) * shBasisFunc;
+        }
+    }
+
+    // TODO: double check this
+    //color *= PRIMARY_LIGHT_POWER;
+    color *= 5.0f;
+
+    return color;
 }

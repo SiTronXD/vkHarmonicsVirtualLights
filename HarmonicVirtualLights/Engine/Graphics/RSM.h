@@ -9,8 +9,9 @@ private:
 	Texture2D positionTexture;
 	Texture2D normalTexture;
 	Texture2D brdfIndexTexture;
-	// Texture2D emissionFunctionTexture;
 	Texture2D depthTexture;
+
+	Texture2D highResShadowMapTexture;
 
 	UniformBuffer camUbo;
 
@@ -23,7 +24,8 @@ public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat NORMAL_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
 	static const VkFormat BRDF_INDEX_FORMAT = VK_FORMAT_R8_UINT;
-	static const uint32_t TEX_SIZE = 12;
+	static const uint32_t TEX_SIZE = 8;
+	static const uint32_t HIGH_RES_SHADOW_MAP_SIZE = 256;
 
 	RSM();
 

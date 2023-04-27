@@ -37,17 +37,16 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		(VkImageUsageFlagBits)0,
 		samplerSettings
 	);
-	/*this->emissionFunctionTexture.createAsRenderableSampledTexture(
-		gfxAllocContext,
-		this->width,
-		this->height,
-		VK_FORMAT_R32G32B32A32_SFLOAT,
-		(VkImageUsageFlagBits)0
-	);*/
 	this->depthTexture.createAsDepthSampledTexture(
 		gfxAllocContext,
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE
+	);
+
+	this->highResShadowMapTexture.createAsDepthSampledTexture(
+		gfxAllocContext,
+		RSM::HIGH_RES_SHADOW_MAP_SIZE,
+		RSM::HIGH_RES_SHADOW_MAP_SIZE
 	);
 
 	// Cam ubo
@@ -82,8 +81,9 @@ void RSM::cleanup()
 {
 	this->camUbo.cleanup();
 
+	this->highResShadowMapTexture.cleanup();
+
 	this->depthTexture.cleanup();
-	//this->emissionFunctionTexture.cleanup();
 	this->brdfIndexTexture.cleanup();
 	this->normalTexture.cleanup();
 	this->positionTexture.cleanup();

@@ -232,8 +232,8 @@ void main()
 
 	vec3 color = ambient + Lo;*/
 
-	// Output only indirect light
 	vec3 color = getIndirectLight(fragTexCoord, fragWorldPos, lightPos, N, V, uint(lightCamUbo.pos.w), fragBrdfIndex);
+	color += getDirectLight(fragWorldPos, lightPos, N, V, fragBrdfIndex);
 
 	outColor = vec4(color, 1.0f);
 }
