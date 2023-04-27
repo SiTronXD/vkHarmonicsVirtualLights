@@ -247,7 +247,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             float hvlRadius = d * (gamma + (gamma * gamma * gamma / 3.0f)); // Taylor series approximation of tan(x)
             
             // Pythagorean identities
-            float sinA = abs(hvlRadius / hvlDistance);
+            float sinA = hvlRadius / max(hvlDistance, 0.0001f);
             float alpha = float(sqrt(clamp(1.0f - sinA*sinA, 0.0f, 1.0f))); // alpha = cos(a)
             float halfAngle = acos(clamp(alpha, 0.0f, 1.0f)); // TODO: check if this clamping range is correct (because of potential -sqrt)
 
