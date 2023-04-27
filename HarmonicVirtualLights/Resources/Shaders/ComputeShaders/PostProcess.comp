@@ -1,5 +1,9 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive: require
+
+#include "../Common/ColorTransformations.glsl"
+
 layout (local_size_x = 16, local_size_y = 16) in;
 
 layout (binding = 0, rgba16f) uniform image2D hdrImage;
@@ -9,30 +13,6 @@ layout(push_constant) uniform PushConstantData
 {
 	uvec4 resolution;
 } pc;
-
-vec3 toneMap(vec3 x)
-{
-	// Reinhard
-	//return x / (x + vec3(1.0f));
-
-	// ACES
-	const float a = 2.51f;
-	const float b = 0.03f;
-	const float c = 2.43f;
-	const float d = 0.59f;
-	const float e = 0.14f;
-	return (x * (a * x + b)) / (x * (c * x + d) + e);
-}
-
-vec3 srgbToLinear(vec3 col)
-{
-	return pow(col, vec3(2.2f));
-}
-
-vec3 linearToSrgb(vec3 col)
-{
-	return pow(col, vec3(1.0f / 2.2f));
-}
 
 void main()
 {

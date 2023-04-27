@@ -2,10 +2,12 @@
 
 #extension GL_GOOGLE_include_directive: require
 
+#include "../Common/Sh.glsl"
+#include "../Common/ColorTransformations.glsl"
+
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
 #define SHADOW_BIAS 0.003f
-
-#include "../Common/Sh.glsl"
+#define SHADOW_MAP_SIZE 256.0f
 
 layout(binding = 1) uniform LightCamUBO 
 {
@@ -75,16 +77,6 @@ vec3 getShIrradiance(vec3 normal)
 		2.0f * c2 * (L11*x + L1m1*y + L10*z);
 }
 
-vec3 srgbToLinear(vec3 col)
-{
-	return pow(col, vec3(2.2f));
-}
-
-vec3 linearToSrgb(vec3 col)
-{
-	return pow(col, vec3(1.0f / 2.2f));
-}
-
 float distributionGGX(vec3 N, vec3 H, float roughness)
 {
 	//float a = roughness; // (Epic games recommends squaring roughness)
@@ -140,15 +132,14 @@ float getShadowFactor()
 	lightWorldPos.xy = lightWorldPos.xy * 0.5f + vec2(0.5f);
 
 	// Sample depth texture
-	const float smSize = lightCamUbo.pos.w;
-	const float oneOverSize = 1.0f / smSize;
-	vec2 smPos = lightWorldPos.xy * smSize;
+	const float oneOverSize = 1.0f / SHADOW_MAP_SIZE;
+	vec2 smPos = lightWorldPos.xy * SHADOW_MAP_SIZE;
 	vec2 fractPos = fract(smPos);
-	vec2 corner0 = (floor(smPos) + vec2(0.5f)) / smSize;
-	float lightDepth0 = texture(rsmDepthTex, corner0).r;
-	float lightDepth1 = texture(rsmDepthTex, corner0 + vec2(oneOverSize, 0.0f)).r;
-	float lightDepth2 = texture(rsmDepthTex, corner0 + vec2(0.0f, oneOverSize)).r;
-	float lightDepth3 = texture(rsmDepthTex, corner0 + vec2(oneOverSize, oneOverSize)).r;
+	vec2 corner0 = (floor(smPos) + vec2(0.5f)) / SHADOW_MAP_SIZE;
+	float lightDepth0 = texture(shadowMapTex, corner0).r;
+	float lightDepth1 = texture(shadowMapTex, corner0 + vec2(oneOverSize, 0.0f)).r;
+	float lightDepth2 = texture(shadowMapTex, corner0 + vec2(0.0f, oneOverSize)).r;
+	float lightDepth3 = texture(shadowMapTex, corner0 + vec2(oneOverSize, oneOverSize)).r;
 	float result0 = lightWorldPos.z - SHADOW_BIAS <= lightDepth0 ? 1.0f : 0.0f;
 	float result1 = lightWorldPos.z - SHADOW_BIAS <= lightDepth1 ? 1.0f : 0.0f;
 	float result2 = lightWorldPos.z - SHADOW_BIAS <= lightDepth2 ? 1.0f : 0.0f;
@@ -233,7 +224,7 @@ void main()
 	vec3 color = ambient + Lo;*/
 
 	vec3 color = getIndirectLight(fragTexCoord, fragWorldPos, lightPos, N, V, uint(lightCamUbo.pos.w), fragBrdfIndex);
-	color += getDirectLight(fragWorldPos, lightPos, N, V, fragBrdfIndex);
+	color += getDirectLight(fragWorldPos, lightPos, N, V, fragBrdfIndex) * getShadowFactor();
 
 	outColor = vec4(color, 1.0f);
 }

@@ -598,7 +598,7 @@ void Renderer::recordCommandBuffer(
 
 						// Push descriptor set update
 						commandBuffer.pushDescriptorSet(
-							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
+							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
 							0,
 							uint32_t(writeDescriptorSets.size()),
 							writeDescriptorSets.data()
@@ -609,7 +609,7 @@ void Renderer::recordCommandBuffer(
 						pushConstantData.modelMat = transform.modelMat;
 						pushConstantData.brdfProperties.x = material.brdfId;
 						commandBuffer.pushConstant(
-							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix
+							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
 							&pushConstantData
 						);
 
@@ -631,7 +631,7 @@ void Renderer::recordCommandBuffer(
 		commandBuffer.endRendering();
 
 		// Transition layouts for RSM render targets
-		std::array<VkImageMemoryBarrier2, 4> rsmEndMemoryBarriers =
+		std::array<VkImageMemoryBarrier2, 3> rsmEndMemoryBarriers =
 		{
 			// Position
 			PipelineBarrier::imageMemoryBarrier2(
@@ -667,21 +667,147 @@ void Renderer::recordCommandBuffer(
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 				this->rsm.getBrdfIndexTexture().getVkImage(),
 				VK_IMAGE_ASPECT_COLOR_BIT
-			),
-
-			// Depth
-			PipelineBarrier::imageMemoryBarrier2(
-				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-				VK_ACCESS_SHADER_READ_BIT,
-				VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				this->rsm.getDepthTexture().getVkImage(),
-				VK_IMAGE_ASPECT_DEPTH_BIT
 			)
 		};
 		commandBuffer.memoryBarrier(rsmEndMemoryBarriers.data(), uint32_t(rsmEndMemoryBarriers.size()));
+	}
+
+	// Bind dummy pipeline before begin rendering
+	commandBuffer.bindPipeline(this->gfxResManager.getOneShadowMapPipeline());
+
+	// ---------- Render scene to RSM's high resolution shadow map ----------
+	{
+		VkExtent2D shadowMapExtent{ RSM::HIGH_RES_SHADOW_MAP_SIZE, RSM::HIGH_RES_SHADOW_MAP_SIZE };
+
+		// Viewport
+		float targetHeight = (float) shadowMapExtent.height;
+		VkViewport shadowMapViewport{};
+		shadowMapViewport.x = 0.0f;
+		shadowMapViewport.y = targetHeight;
+		shadowMapViewport.width = static_cast<float>(shadowMapExtent.width);
+		shadowMapViewport.height = -targetHeight;
+		shadowMapViewport.minDepth = 0.0f;
+		shadowMapViewport.maxDepth = 1.0f;
+		commandBuffer.setViewport(shadowMapViewport);
+
+		// Scissor
+		VkRect2D shadowMapScissor{};
+		shadowMapScissor.offset = { 0, 0 };
+		shadowMapScissor.extent = shadowMapExtent;
+		commandBuffer.setScissor(shadowMapScissor);
+
+		// Transition layout
+		commandBuffer.memoryBarrier(
+			VK_ACCESS_NONE,
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, // Stage from "previous frame"
+			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,	// Stage from "current frame"
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			this->rsm.getHighResShadowMapTexture().getVkImage(),
+			VK_IMAGE_ASPECT_DEPTH_BIT
+		);
+
+		// Clear values for color and depth
+		std::array<VkClearValue, 1> clearValues{};
+		clearValues[0].depthStencil = { 1.0f, 0 };
+
+		// Depth attachment
+		VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
+		depthAttachment.imageView = this->rsm.getHighResShadowMapTexture().getVkImageView();
+		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAttachment.clearValue = clearValues[0];
+
+		// Begin rendering
+		VkRenderingInfo renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
+		renderingInfo.renderArea = shadowMapScissor;
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = uint32_t(0);
+		renderingInfo.pDepthAttachment = &depthAttachment;
+		commandBuffer.beginRendering(renderingInfo);
+
+		{
+			uint32_t currentPipelineIndex = ~0u;
+			uint32_t numPipelineSwitches = 0;
+
+			// Common descriptor set bindings
+
+			// Binding 0
+			VkDescriptorBufferInfo shadowMapUboInfo{};
+			shadowMapUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
+			shadowMapUboInfo.range = sizeof(CamUBO);
+
+			std::array<VkWriteDescriptorSet, 1> writeDescriptorSets
+			{
+				DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &shadowMapUboInfo)
+			};
+
+			// Loop through entities with mesh components
+			auto view = scene.getRegistry().view<Material, MeshComponent, Transform>();
+			view.each([&](
+				const Material& material,
+				const MeshComponent& meshComp,
+				const Transform& transform)
+				{
+					if (material.castShadows)
+					{
+						// Switch pipeline if necessary
+						if (currentPipelineIndex != material.shadowMapPipelineIndex)
+						{
+							commandBuffer.bindPipeline(
+								this->gfxResManager.getPipeline(material.shadowMapPipelineIndex)
+							);
+
+							currentPipelineIndex = material.shadowMapPipelineIndex;
+							numPipelineSwitches++;
+						}
+
+						// Push descriptor set update
+						commandBuffer.pushDescriptorSet(
+							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
+							0,
+							uint32_t(writeDescriptorSets.size()),
+							writeDescriptorSets.data()
+						);
+
+						// Push constant data
+						PCD pushConstantData{};
+						pushConstantData.modelMat = transform.modelMat;
+						commandBuffer.pushConstant(
+							this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
+							&pushConstantData
+						);
+
+						// Render mesh
+						const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
+
+						// Record binding vertex/index buffer
+						commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
+						commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer());
+
+						// Record draw
+						commandBuffer.drawIndexed(currentMesh.getNumIndices());
+					}
+				}
+			);
+		}
+
+		// End rendering
+		commandBuffer.endRendering();
+
+		// Transition layout
+		commandBuffer.memoryBarrier(
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			this->rsm.getHighResShadowMapTexture().getVkImage(),
+			VK_IMAGE_ASPECT_DEPTH_BIT
+		);
 	}
 
 	// Dynamic viewport
@@ -807,7 +933,7 @@ void Renderer::recordCommandBuffer(
 			shCoeffSboInfo.range = this->shCoefficientBuffer.getBufferSize();
 
 			// Binding 5
-			const Texture& rsmDepthTex = this->rsm.getDepthTexture();
+			const Texture& rsmDepthTex = this->rsm.getHighResShadowMapTexture();
 			VkDescriptorImageInfo rsmDepthImageInfo{};
 			rsmDepthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			rsmDepthImageInfo.imageView = rsmDepthTex.getVkImageView();
@@ -1131,6 +1257,7 @@ void Renderer::initForScene(Scene& scene)
 		{
 			// Pipelines for materials
 			material.rsmPipelineIndex = this->gfxResManager.getMaterialRsmPipelineIndex(material);
+			material.shadowMapPipelineIndex = this->gfxResManager.getMaterialShadowMapPipelineIndex(material);
 			material.pipelineIndex = this->gfxResManager.getMaterialPipelineIndex(material);
 
 			// Load default material textures

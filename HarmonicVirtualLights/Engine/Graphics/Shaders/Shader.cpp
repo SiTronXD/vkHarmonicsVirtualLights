@@ -71,5 +71,8 @@ void Shader::loadAndCreateShaderModule(const Device& device, const std::string& 
 
 void Shader::cleanup()
 {
-	vkDestroyShaderModule(this->device->getVkDevice(), this->shaderModule, nullptr);
+	if (this->shaderModule != VK_NULL_HANDLE)
+	{
+		vkDestroyShaderModule(this->device->getVkDevice(), this->shaderModule, nullptr);
+	}
 }

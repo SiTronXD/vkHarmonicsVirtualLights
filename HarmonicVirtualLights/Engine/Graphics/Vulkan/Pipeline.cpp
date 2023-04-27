@@ -45,13 +45,17 @@ void Pipeline::createGraphicsPipeline(
 	this->device = &device;
 
 	VertexShader vertShader(device, vertexShader);
-	FragmentShader fragShader(device, fragmentShader);
+	FragmentShader fragShader;
 
-	VkPipelineShaderStageCreateInfo shaderStages[] =
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+	shaderStages.push_back(vertShader.getShaderStage());
+
+	// Fragment shader is optional
+	if (fragmentShader != "")
 	{
-		vertShader.getShaderStage(),
-		fragShader.getShaderStage()
-	};
+		fragShader.createFromFile(device, fragmentShader);
+		shaderStages.push_back(fragShader.getShaderStage());
+	}
 
 	// Vertex input
 	auto bindingDescription = Vertex::getBindingDescription();
@@ -159,8 +163,8 @@ void Pipeline::createGraphicsPipeline(
 
 	// Graphics pipeline
 	VkGraphicsPipelineCreateInfo pipelineInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.stageCount = uint32_t(shaderStages.size());
+	pipelineInfo.pStages = shaderStages.data();
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;

@@ -84,6 +84,34 @@ uint32_t GfxResourceManager::getMaterialRsmPipelineIndex(const Material& materia
 	return newIndex;
 }
 
+uint32_t GfxResourceManager::getMaterialShadowMapPipelineIndex(const Material& material)
+{
+	std::string matStr = "";
+	material.matToStr(matStr);
+
+	// Check if index already exists
+	if (this->materialToShadowMapPipeline.count(matStr) != 0)
+		return this->materialToShadowMapPipeline[matStr];
+
+	// Add new pipeline
+	uint32_t newIndex = uint32_t(this->pipelines.size());
+	this->pipelines.push_back(Pipeline());
+	this->materialToShadowMapPipeline.insert({ matStr, newIndex });
+
+	// Initialize new pipeline
+	Pipeline& newPipeline = this->pipelines[newIndex];
+	newPipeline.createGraphicsPipeline(
+		*this->gfxAllocContext->device,
+		this->graphicsPipelineLayout,
+		{},
+		Texture::getDepthBufferFormat(),
+		"Resources/Shaders/ShadowMap.vert.spv",
+		""
+	);
+
+	return newIndex;
+}
+
 uint32_t GfxResourceManager::getMaterialPipelineIndex(const Material& material)
 {
 	std::string matStr = "";

@@ -29,6 +29,7 @@ struct Material
 	uint32_t brdfId = 0; // Default to avoid issues within shader
 
 	uint32_t rsmPipelineIndex = ~0u;
+	uint32_t shadowMapPipelineIndex = ~0u;
 	uint32_t pipelineIndex = ~0u;
 
 	Material()

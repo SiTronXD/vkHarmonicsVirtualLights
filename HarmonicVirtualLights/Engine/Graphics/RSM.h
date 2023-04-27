@@ -37,6 +37,7 @@ public:
 	inline const Texture2D& getNormalTexture() const { return this->normalTexture; }
 	inline const Texture2D& getBrdfIndexTexture() const { return this->brdfIndexTexture; }
 	inline const Texture2D& getDepthTexture() const { return this->depthTexture; }
+	inline const Texture2D& getHighResShadowMapTexture() const { return this->highResShadowMapTexture; }
 
 	inline const Buffer& getCamUbo() const { return this->camUbo; }
 };

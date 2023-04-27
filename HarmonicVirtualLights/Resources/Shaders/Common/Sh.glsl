@@ -4,7 +4,7 @@
 #define SQRT_TWO 1.4142135623730950488016887242097
 
 #define RSM_FOV (HALF_PI)
-#define PRIMARY_LIGHT_POWER 100.0f
+#define PRIMARY_LIGHT_POWER 400.0f
 
 #define NUM_ANGLES 90
 #define MAX_L 6
@@ -22,7 +22,7 @@ layout(binding = 4) readonly buffer SHCoefficientsBuffer
 	SHData coefficientSets[];
 } shCoefficients;
 
-layout(binding = 5) uniform sampler2D rsmDepthTex;
+layout(binding = 5) uniform sampler2D shadowMapTex;
 layout(binding = 6) uniform sampler2D rsmPositionTex;
 layout(binding = 7) uniform sampler2D rsmNormalTex;
 layout(binding = 8) uniform usampler2D rsmBRDFIndexTex;

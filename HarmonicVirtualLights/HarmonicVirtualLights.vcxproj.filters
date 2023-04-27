@@ -421,8 +421,10 @@
     <CustomBuild Include="Resources\Shaders\VertexShaders\Skybox.vert" />
     <CustomBuild Include="Resources\Shaders\FragmentShaders\Rsm.frag" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\Rsm.vert" />
+    <CustomBuild Include="Resources\Shaders\VertexShaders\ShadowMap.vert" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Shaders\Common\Sh.glsl" />
+    <None Include="Resources\Shaders\Common\ColorTransformations.glsl" />
   </ItemGroup>
 </Project>
