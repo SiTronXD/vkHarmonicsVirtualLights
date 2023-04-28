@@ -55,7 +55,7 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		gfxAllocContext,
 		sizeof(LightCamUBO)
 	);
-	this->position = glm::vec3(2.0f, 2.0f, 2.0f) * 0.5f;
+	this->position = glm::vec3(1.0f, 1.0f, 1.0f);
 	this->forwardDir = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - this->position);
 	this->projectionMatrix = glm::perspective(
 		glm::radians(90.0f),
