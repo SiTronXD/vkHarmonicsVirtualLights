@@ -29,6 +29,7 @@ private:
 	static VkPhysicalDevice* physicalDevice;
 
 	static float maxAnisotropy;
+	static float timestampPeriod;
 
 	static uint32_t memoryTypeCount;
 	static VkMemoryType memoryTypes[32];
@@ -52,7 +53,8 @@ private:
 	static bool checkValidationLayerSupport(const std::vector<const char*>& layersToSupport);
 
 public:
-	static const inline float& getMaxAnisotropy() { return maxAnisotropy; }
+	static inline float getMaxAnisotropy() { return maxAnisotropy; }
+	static inline float getTimestampPeriod() { return timestampPeriod; }
 
 	static const inline uint32_t& getMemoryTypeCount() { return memoryTypeCount; }
 	static const inline VkMemoryType& getMemoryType(const uint32_t& index) { return memoryTypes[index]; }

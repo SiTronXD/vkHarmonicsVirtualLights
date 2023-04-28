@@ -165,6 +165,22 @@ void CommandBuffer::blit(
 	);
 }
 
+void CommandBuffer::resetQueryPool(
+	const VkQueryPool& queryPool, 
+	uint32_t firstQuery,
+	uint32_t queryCount)
+{
+	vkCmdResetQueryPool(this->commandBuffer, queryPool, firstQuery, queryCount);
+}
+
+void CommandBuffer::writeTimestamp(
+	const VkQueryPool& queryPool,
+	VkPipelineStageFlagBits pipelineStage, 
+	uint32_t queryIndex)
+{
+	vkCmdWriteTimestamp(this->commandBuffer, pipelineStage, queryPool, queryIndex);
+}
+
 void CommandBuffer::memoryBarrier(
 	VkAccessFlags2 srcAccessMask,
 	VkAccessFlags2 dstAccessMask,

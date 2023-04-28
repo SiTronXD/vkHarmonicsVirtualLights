@@ -8,8 +8,11 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Try unrolling associated legendre polynomials
 * Optimize factorials
 * Remove repeating terms (specifically in getCoeffL)
-* Direct lighting and spotlight fade at edges
+* Spotlight fade at edges and attenuation for direct lighting
 * Use storage images instead of sampled images
+* Use sinc window to try and avoid ringing artefacts
+* "vkHarmonicsVirtualLights"*
+* Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
 
 # Vulkan features used
 * Version 1.3

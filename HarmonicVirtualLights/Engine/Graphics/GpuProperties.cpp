@@ -3,6 +3,7 @@
 
 VkPhysicalDevice* GpuProperties::physicalDevice = nullptr;
 float GpuProperties::maxAnisotropy = 0.0f;
+float GpuProperties::timestampPeriod = 0.0f;
 uint32_t GpuProperties::memoryTypeCount = 0;
 VkMemoryType GpuProperties::memoryTypes[32]{};
 
@@ -19,6 +20,7 @@ void GpuProperties::updateProperties(
 
 	// Properties
 	GpuProperties::maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+	GpuProperties::timestampPeriod = properties.limits.timestampPeriod;
 
 	// Memory properties
 	GpuProperties::memoryTypeCount = memProperties.memoryTypeCount;
@@ -209,12 +211,19 @@ bool GpuProperties::isPhysicalDeviceSuitable(
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(physDevice, &properties);
 
+	// Timestamps
+	bool supportsTimestamps = true;
+#ifdef RECORD_GPU_TIMES
+	supportsTimestamps = properties.limits.timestampComputeAndGraphics;
+#endif
+
 	bool foundSuitableDevice = outputIndices.isComplete() &&
 		extensionsSupported &&
 		swapchainAdequate &&
 		supportedFeatures.samplerAnisotropy &&
 		supportedFeatures.fillModeNonSolid &&
-		VK_API_VERSION_MINOR(properties.apiVersion) >= 3; // Make sure atleast vulkan 1.3 is supported
+		VK_API_VERSION_MINOR(properties.apiVersion) >= 3 && // Make sure atleast vulkan 1.3 is supported
+		supportsTimestamps; 
 
 	return foundSuitableDevice;
 }

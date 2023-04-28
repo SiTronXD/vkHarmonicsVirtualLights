@@ -71,7 +71,7 @@ void PhysicalDevice::pickPhysicalDevice(
 	// Update properties for the program
 	GpuProperties::updateProperties(&this->physicalDevice);
 
-	// Primt limits
+	// Print limits
 	VkPhysicalDeviceLimits deviceLimits = properties.limits;
 	/*Log::write("maxPerStageDescriptorSampledImages: " + std::to_string(deviceLimits.maxPerStageDescriptorSampledImages));
 	Log::write("maxPerStageDescriptorStorageBuffers: " + std::to_string(deviceLimits.maxPerStageDescriptorStorageBuffers));

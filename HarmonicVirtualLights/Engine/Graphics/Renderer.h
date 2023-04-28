@@ -49,6 +49,12 @@ private:
 
 	GfxAllocContext gfxAllocContext{};
 
+	// Timestamp queries
+#ifdef RECORD_GPU_TIMES
+	static const uint32_t QUERY_POOL_NUM_ELEMENTS = 2;
+	VkQueryPool queryPools[GfxSettings::FRAMES_IN_FLIGHT];
+#endif
+
 	// Compute
 	PipelineLayout postProcessPipelineLayout;
 	Pipeline postProcessPipeline;
@@ -86,6 +92,7 @@ private:
 	void initVma();
 	void initImgui();
 
+	void createQueryPool();
 	void createCamUbo();
 	void addShCoefficients(
 		const std::vector<std::vector<RGB>>& shCoeffs, 

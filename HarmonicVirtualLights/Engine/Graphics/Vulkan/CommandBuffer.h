@@ -50,6 +50,14 @@ public:
 		const VkImage& srcImage, VkImageLayout srcImageLayout,
 		const VkImage& dstImage, VkImageLayout dstImageLayout,
 		const VkImageBlit& blit);
+	void resetQueryPool(
+		const VkQueryPool& queryPool,
+		uint32_t firstQuery,
+		uint32_t queryCount);
+	void writeTimestamp(
+		const VkQueryPool& queryPool, 
+		VkPipelineStageFlagBits pipelineStage, 
+		uint32_t queryIndex);
 
 	void memoryBarrier(
 		VkAccessFlags2 srcAccessMask,

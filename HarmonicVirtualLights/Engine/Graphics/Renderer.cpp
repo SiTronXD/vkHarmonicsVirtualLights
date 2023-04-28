@@ -94,6 +94,7 @@ void Renderer::initVulkan()
 
 	this->createSyncObjects();
 	this->createCamUbo();
+	this->createQueryPool();
 
 	this->gfxResManager.init(this->gfxAllocContext);
 	this->resourceProcessor.init(*this, *this->resourceManager, this->gfxAllocContext);
@@ -203,6 +204,11 @@ void Renderer::cleanup()
 	this->postProcessFinishedSemaphores.cleanup();
 	this->inFlightFences.cleanup();
 
+#ifdef RECORD_GPU_TIMES
+	for (uint32_t i = 0; i < GfxSettings::FRAMES_IN_FLIGHT; ++i)
+		vkDestroyQueryPool(this->device.getVkDevice(), this->queryPools[i], nullptr);
+#endif
+
 	this->singleTimeCommandPool.cleanup();
 	this->commandPool.cleanup();
 	this->postProcessPipeline.cleanup();
@@ -216,6 +222,27 @@ void Renderer::cleanup()
 
 	// Destroys both physical device and instance
 	this->instance.cleanup();
+}
+
+void Renderer::createQueryPool()
+{
+#ifdef RECORD_GPU_TIMES
+	VkQueryPoolCreateInfo queryPoolCreateInfo{ VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO };
+	queryPoolCreateInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
+	queryPoolCreateInfo.queryCount = this->QUERY_POOL_NUM_ELEMENTS; // Start + end
+
+	for (uint32_t i = 0; i < GfxSettings::FRAMES_IN_FLIGHT; ++i)
+	{
+		if (vkCreateQueryPool(
+			this->device.getVkDevice(),
+			&queryPoolCreateInfo,
+			nullptr,
+			&this->queryPools[i]) != VK_SUCCESS)
+		{
+			Log::error("Failed to create query pool with index " + std::to_string(i) + ".");
+		}
+	}
+#endif
 }
 
 void Renderer::createCamUbo()
@@ -378,10 +405,10 @@ void Renderer::draw(Scene& scene)
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 
-	// Present!
+	// Present
 	result = vkQueuePresentKHR(this->queueFamilies.getVkPresentQueue(), &presentInfo);
 
-	// Window resize?
+	// Window resize
 	if (result == VK_ERROR_OUT_OF_DATE_KHR ||
 		result == VK_SUBOPTIMAL_KHR ||
 		this->framebufferResized)
@@ -393,6 +420,27 @@ void Renderer::draw(Scene& scene)
 	{
 		Log::error("Failed to present swapchain image.");
 	}
+
+	// TODO: fix this by waiting at the start of a frame
+#ifdef RECORD_GPU_TIMES
+	this->device.waitIdle();
+	uint64_t timestampResults[this->QUERY_POOL_NUM_ELEMENTS] = {};
+	uint32_t dataSize = this->QUERY_POOL_NUM_ELEMENTS * sizeof(timestampResults[0]);
+	vkGetQueryPoolResults(
+		this->device.getVkDevice(), 
+		this->queryPools[GfxState::getFrameIndex()],
+		0,
+		this->QUERY_POOL_NUM_ELEMENTS,
+		dataSize,
+		&timestampResults,
+		sizeof(timestampResults[0]),
+		VK_QUERY_RESULT_64_BIT
+	);
+
+	float gpuGraphicsProcessingTimeMs = float(timestampResults[1] - timestampResults[0]) * GpuProperties::getTimestampPeriod() * 1e-6;
+	Log::write("graphics processing ms: " + std::to_string(gpuGraphicsProcessingTimeMs));
+
+#endif
 
 	// Next frame index
 	GfxState::currentFrameIndex = (GfxState::currentFrameIndex + 1) % GfxSettings::FRAMES_IN_FLIGHT;
@@ -438,6 +486,18 @@ void Renderer::recordCommandBuffer(
 
 	// Begin
 	commandBuffer.resetAndBegin();
+
+#ifdef RECORD_GPU_TIMES
+	commandBuffer.resetQueryPool(
+		this->queryPools[GfxState::getFrameIndex()], 0, this->QUERY_POOL_NUM_ELEMENTS
+	);
+
+	commandBuffer.writeTimestamp(
+		this->queryPools[GfxState::getFrameIndex()],
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		0
+	);
+#endif
 
 	// ---------- Render scene to RSM ----------
 	{
@@ -1061,6 +1121,14 @@ void Renderer::recordCommandBuffer(
 		// End rendering
 		commandBuffer.endRendering();
 	}
+
+#ifdef RECORD_GPU_TIMES
+	commandBuffer.writeTimestamp(
+		this->queryPools[GfxState::getFrameIndex()],
+		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		1
+	);
+#endif
 
 	// ---------- Render imgui to HDR buffer ----------
 	{

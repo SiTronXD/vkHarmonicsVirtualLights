@@ -3,6 +3,8 @@
 #include <array>
 #include <vulkan/vulkan.h>
 
+#define RECORD_GPU_TIMES
+
 class GfxSettings
 {
 public:
