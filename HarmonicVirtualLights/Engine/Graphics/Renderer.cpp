@@ -650,12 +650,6 @@ void Renderer::initForScene(Scene& scene)
 			material.rsmPipelineIndex = this->gfxResManager.getMaterialRsmPipelineIndex(material);
 			material.shadowMapPipelineIndex = this->gfxResManager.getMaterialShadowMapPipelineIndex(material);
 			material.pipelineIndex = this->gfxResManager.getMaterialPipelineIndex(material);
-
-			// Load default material textures
-			if(material.roughnessTextureId == ~0u)
-				material.roughnessTextureId = whiteTextureId;
-			if (material.metallicTextureId == ~0u)
-				material.metallicTextureId = whiteTextureId;
 		}
 	);
 

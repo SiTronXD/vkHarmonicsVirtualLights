@@ -291,7 +291,8 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
 {
     vec3 color = vec3(0.0f);
 
-    vec3 toLight = normalize(lightPos - worldPos);
+    vec3 toLightVec = lightPos - worldPos;
+    vec3 toLight = normalize(toLightVec);
 
     // Relative light direction
     vec3 wLightTangentSpace = getWorldToTangentMat(normal, viewDir) * toLight;
@@ -320,6 +321,9 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
     // TODO: double check this
     //color *= PRIMARY_LIGHT_POWER;
     color *= 20.0f;
+
+	// Spotlight attenuation
+	color *= 1.0f / max(dot(toLightVec, toLightVec), 0.0001f);
 
     return color;
 }

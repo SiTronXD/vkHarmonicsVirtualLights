@@ -43,8 +43,6 @@ void TestScene::init()
 
 		Material& material = this->getComponent<Material>(testEntity);
 		material.albedoTextureId = whiteTextureId;
-		material.roughnessTextureId = whiteTextureId;
-		material.metallicTextureId = whiteTextureId;
 		material.brdfId = brdfId0;
 	}
 
@@ -69,8 +67,6 @@ void TestScene::init()
 
 		Material& material = this->getComponent<Material>(testEntity);
 		material.albedoTextureId = whiteTextureId;
-		material.roughnessTextureId = whiteTextureId;
-		material.metallicTextureId = whiteTextureId;
 		material.brdfId = brdfId1;
 	}
 

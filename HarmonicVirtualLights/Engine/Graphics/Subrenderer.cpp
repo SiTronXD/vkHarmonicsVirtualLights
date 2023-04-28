@@ -528,12 +528,8 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 
 		VkDescriptorImageInfo albedoImageInfo{};
 		albedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		VkDescriptorImageInfo roughnessImageInfo{};
-		roughnessImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		VkDescriptorImageInfo metallicImageInfo{};
-		metallicImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		std::array<VkWriteDescriptorSet, 12> writeDescriptorSets
+		std::array<VkWriteDescriptorSet, 10> writeDescriptorSets
 		{
 			DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
 			DescriptorSet::writeBuffer(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightCamUboInfo),
@@ -548,9 +544,7 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 			DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmNormalImageInfo),
 			DescriptorSet::writeImage(8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmBRDFImageInfo),
 
-			DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-			DescriptorSet::writeImage(10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr),
-			DescriptorSet::writeImage(11, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
+			DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
 		};
 
 		// Loop through entities with mesh components
@@ -577,22 +571,8 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 		albedoImageInfo.imageView = albedoTexture->getVkImageView();
 		albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
-		// Binding 10
-		const Texture* roughnessTexture =
-			this->resourceManager->getTexture(material.roughnessTextureId);
-		roughnessImageInfo.imageView = roughnessTexture->getVkImageView();
-		roughnessImageInfo.sampler = roughnessTexture->getVkSampler();
-
-		// Binding 11
-		const Texture* metallicTexture =
-			this->resourceManager->getTexture(material.metallicTextureId);
-		metallicImageInfo.imageView = metallicTexture->getVkImageView();
-		metallicImageInfo.sampler = metallicTexture->getVkSampler();
-
 		// Push descriptor set update
 		writeDescriptorSets[9].pImageInfo = &albedoImageInfo;
-		writeDescriptorSets[10].pImageInfo = &roughnessImageInfo;
-		writeDescriptorSets[11].pImageInfo = &metallicImageInfo;
 		commandBuffer.pushDescriptorSet(
 			this->gfxResManager.getGraphicsPipelineLayout(),
 			0,

@@ -19,10 +19,6 @@ layout(binding = 1) uniform LightCamUBO
 layout(binding = 2) uniform sampler2D brdfLutTex;
 layout(binding = 3) uniform samplerCube prefilterMap;
 
-layout(binding = 9) uniform sampler2D albedoTex;
-layout(binding = 10) uniform sampler2D roughnessTex;
-layout(binding = 11) uniform sampler2D metallicTex;
-
 
 layout(location = 0) in vec3 fragNormal;
 layout(location = 1) in vec3 fragWorldPos;
@@ -153,9 +149,6 @@ float getShadowFactor(vec3 toLightDir, vec3 toLightVec)
 	// Spotlight cone cutoff
 	float currentCutoff = dot(lightCamUbo.dir.xyz, -toLightDir);
 	finalResult *= smoothstep(0.0f, 1.0f, (currentCutoff - COS_HALF_FOV) * 10.0f / (1.0f - COS_HALF_FOV));
-
-	// Spotlight attenuation
-	finalResult *= 1.0f / max(dot(toLightVec, toLightVec), 0.0001f);
 
 	return finalResult;
 }

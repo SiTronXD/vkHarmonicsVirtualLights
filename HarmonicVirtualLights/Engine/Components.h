@@ -24,8 +24,6 @@ struct Material
 	bool castShadows = true;
 
 	uint32_t albedoTextureId = ~0u;
-	uint32_t roughnessTextureId = ~0u;
-	uint32_t metallicTextureId = ~0u;
 	uint32_t brdfId = 0; // Default to avoid issues within shader
 
 	uint32_t rsmPipelineIndex = ~0u;
