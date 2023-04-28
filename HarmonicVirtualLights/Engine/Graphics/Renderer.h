@@ -14,6 +14,7 @@
 #include "Vulkan/DescriptorSetLayout.h"
 #include "Vulkan/Pipeline.h"
 #include "Vulkan/CommandBufferArray.h"
+#include "Vulkan/QueryPoolArray.h"
 #include "Vulkan/SemaphoreArray.h"
 #include "Vulkan/FenceArray.h"
 #include "Buffer/UniformBuffer.h"
@@ -51,8 +52,7 @@ private:
 
 	// Timestamp queries
 #ifdef RECORD_GPU_TIMES
-	static const uint32_t QUERY_POOL_NUM_ELEMENTS = 2;
-	VkQueryPool queryPools[GfxSettings::FRAMES_IN_FLIGHT];
+	QueryPoolArray queryPools;
 #endif
 
 	// Compute
@@ -92,7 +92,6 @@ private:
 	void initVma();
 	void initImgui();
 
-	void createQueryPool();
 	void createCamUbo();
 	void addShCoefficients(
 		const std::vector<std::vector<RGB>>& shCoeffs, 

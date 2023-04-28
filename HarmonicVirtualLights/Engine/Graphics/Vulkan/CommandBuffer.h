@@ -50,9 +50,8 @@ public:
 		const VkImage& srcImage, VkImageLayout srcImageLayout,
 		const VkImage& dstImage, VkImageLayout dstImageLayout,
 		const VkImageBlit& blit);
-	void resetQueryPool(
+	void resetEntireQueryPool(
 		const VkQueryPool& queryPool,
-		uint32_t firstQuery,
 		uint32_t queryCount);
 	void writeTimestamp(
 		const VkQueryPool& queryPool, 

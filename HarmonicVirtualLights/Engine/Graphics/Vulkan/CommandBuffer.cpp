@@ -165,12 +165,9 @@ void CommandBuffer::blit(
 	);
 }
 
-void CommandBuffer::resetQueryPool(
-	const VkQueryPool& queryPool, 
-	uint32_t firstQuery,
-	uint32_t queryCount)
+void CommandBuffer::resetEntireQueryPool(const VkQueryPool& queryPool, uint32_t queryCount)
 {
-	vkCmdResetQueryPool(this->commandBuffer, queryPool, firstQuery, queryCount);
+	vkCmdResetQueryPool(this->commandBuffer, queryPool, 0, queryCount);
 }
 
 void CommandBuffer::writeTimestamp(
