@@ -15,6 +15,9 @@ private:
 	static std::chrono::system_clock::time_point currentTime;
 	static std::chrono::duration<float> elapsedSeconds;
 
+	static std::chrono::system_clock::time_point userLastTime;
+	static std::chrono::duration<float> userElapsedSeconds;
+
 	static void init();
 	static void updateDeltaTime();
 
@@ -22,4 +25,7 @@ public:
 	static const inline float& getDT() { return deltaTime; };
 	static const inline float& getTimeSinceStart() { return timeSinceStart; }
 	static const inline bool& hasOneSecondPassed() { return oneSecondPassed; }
+
+	static void startTimer();
+	static float endTimer();
 };

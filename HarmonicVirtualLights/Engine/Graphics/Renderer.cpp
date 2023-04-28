@@ -301,6 +301,10 @@ void Renderer::createSyncObjects()
 
 void Renderer::draw(Scene& scene)
 {
+#ifdef RECORD_CPU_TIMES
+	Time::startTimer();
+#endif
+
 	// Wait, then reset fence
 	vkWaitForFences(
 		this->getVkDevice(), 
@@ -309,6 +313,10 @@ void Renderer::draw(Scene& scene)
 		VK_TRUE, 
 		UINT64_MAX
 	);
+
+#ifdef RECORD_CPU_TIMES
+	float waitForFencesMs = Time::endTimer() * 1000.0f;
+#endif
 
 	// Get next image index from the swapchain
 	uint32_t imageIndex;
@@ -338,8 +346,16 @@ void Renderer::draw(Scene& scene)
 	// Only reset the fence if we are submitting work
 	this->inFlightFences.reset(GfxState::getFrameIndex());
 
+#ifdef RECORD_CPU_TIMES
+	Time::startTimer();
+#endif
+
 	// Record command buffer
 	this->recordCommandBuffer(imageIndex, scene);
+
+#ifdef RECORD_CPU_TIMES
+	float recordCommandBufferMs = Time::endTimer() * 1000.0f;
+#endif
 
 	// Update and Render additional Platform Windows
 	if (this->imguiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -386,8 +402,16 @@ void Renderer::draw(Scene& scene)
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 
+#ifdef RECORD_CPU_TIMES
+	Time::startTimer();
+#endif
+
 	// Present
 	result = vkQueuePresentKHR(this->queueFamilies.getVkPresentQueue(), &presentInfo);
+
+#ifdef RECORD_CPU_TIMES
+	float presentMs = Time::endTimer() * 1000.0f;
+#endif
 
 	// Window resize
 	if (result == VK_ERROR_OUT_OF_DATE_KHR ||
@@ -422,6 +446,8 @@ void Renderer::draw(Scene& scene)
 
 	Log::write("rsm ms: " + std::to_string(rsmMs) + "   sm ms: " + std::to_string(smMs) + "   scene ms: " + std::to_string(sceneMs));
 #endif
+
+	Log::write("waitForFence: " + std::to_string(waitForFencesMs) + "   recordCommandBuffer: " + std::to_string(recordCommandBufferMs) + "   present ms: " + std::to_string(presentMs));
 
 	// Next frame index
 	GfxState::currentFrameIndex = (GfxState::currentFrameIndex + 1) % GfxSettings::FRAMES_IN_FLIGHT;
