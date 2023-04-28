@@ -426,11 +426,16 @@ void Renderer::draw(Scene& scene)
 		Log::error("Failed to present swapchain image.");
 	}
 
+#ifdef RECORD_CPU_TIMES
+	Log::write("waitForFence: " + std::to_string(waitForFencesMs) + "   recordCommandBuffer: " + std::to_string(recordCommandBufferMs) + "   present ms: " + std::to_string(presentMs));
+#endif 
+
 	// TODO: fix this by waiting at the start of a frame
 #ifdef RECORD_GPU_TIMES
 	this->device.waitIdle();
 	this->queryPools.getQueryPoolResults(GfxState::getFrameIndex());
 
+	// Gather this frame's data
 	float rsmMs = 
 		float(this->queryPools.getQueryResult(GfxState::getFrameIndex(), 1) - 
 			this->queryPools.getQueryResult(GfxState::getFrameIndex(), 0)) *
@@ -444,10 +449,20 @@ void Renderer::draw(Scene& scene)
 			this->queryPools.getQueryResult(GfxState::getFrameIndex(), 4)) *
 		GpuProperties::getTimestampPeriod() * 1e-6;
 
-	Log::write("rsm ms: " + std::to_string(rsmMs) + "   sm ms: " + std::to_string(smMs) + "   scene ms: " + std::to_string(sceneMs));
-#endif
+	// Average
+	float t = 1.0f / (this->elapsedFrames + 1.0f);
+	this->avgRsmMs = (1.0f - t) * this->avgRsmMs + t * rsmMs;
+	this->avgSmMs = (1.0f - t) * this->avgSmMs + t * smMs;
+	this->avgSceneMs = (1.0f - t) * this->avgSceneMs + t * sceneMs;
+	this->elapsedFrames++;
 
-	Log::write("waitForFence: " + std::to_string(waitForFencesMs) + "   recordCommandBuffer: " + std::to_string(recordCommandBufferMs) + "   present ms: " + std::to_string(presentMs));
+	// Print
+	Log::write("elapsedFrames: " + std::to_string(this->elapsedFrames) + "   rsm ms: " + std::to_string(rsmMs) + "   sm ms: " + std::to_string(smMs) + "   scene ms: " + std::to_string(sceneMs));
+	if (this->elapsedFrames >= 500.0f - 0.5f)
+	{
+		Log::alert("rsm ms: " + std::to_string(this->avgRsmMs) + "   sm ms: " + std::to_string(this->avgSmMs) + "   scene ms: " + std::to_string(this->avgSceneMs));
+	}
+#endif
 
 	// Next frame index
 	GfxState::currentFrameIndex = (GfxState::currentFrameIndex + 1) % GfxSettings::FRAMES_IN_FLIGHT;
@@ -575,6 +590,14 @@ Renderer::Renderer()
 	resourceManager(nullptr),
 	imguiIO(nullptr),
 	vmaAllocator(nullptr),
+
+#ifdef RECORD_GPU_TIMES
+	elapsedFrames(0.0f),
+	avgRsmMs(0.0f),
+	avgSmMs(0.0f),
+	avgSceneMs(0.0f),
+#endif
+
 	brdfLutTextureIndex(~0u),
 	skyboxTextureIndex(~0u)
 {

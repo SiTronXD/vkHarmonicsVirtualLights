@@ -53,6 +53,10 @@ private:
 	// Timestamp queries
 #ifdef RECORD_GPU_TIMES
 	QueryPoolArray queryPools;
+	float elapsedFrames;
+	float avgRsmMs;
+	float avgSmMs;
+	float avgSceneMs;
 #endif
 
 	// Compute
