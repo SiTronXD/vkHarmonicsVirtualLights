@@ -3,6 +3,7 @@
 
 RSM::RSM()
 	: position(1.0f),
+	forwardDir(0.0f, 0.0f, 1.0f),
 	projectionMatrix(1.0f),
 	viewMatrix(1.0f)
 {
@@ -49,12 +50,13 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		RSM::HIGH_RES_SHADOW_MAP_SIZE
 	);
 
-	// Cam ubo
-	this->camUbo.createDynamicCpuBuffer(
+	// Light cam ubo
+	this->lightCamUbo.createDynamicCpuBuffer(
 		gfxAllocContext,
-		sizeof(CamUBO)
+		sizeof(LightCamUBO)
 	);
-	this->position = glm::vec3(2.0f, 2.0f, 2.0f) * 0.7f;
+	this->position = glm::vec3(2.0f, 2.0f, 2.0f) * 0.5f;
+	this->forwardDir = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - this->position);
 	this->projectionMatrix = glm::perspective(
 		glm::radians(90.0f),
 		1.0f,
@@ -63,7 +65,7 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 	);
 	this->viewMatrix = glm::lookAt(
 		this->position,
-		glm::vec3(0.0f, 0.0f, 0.0f),//this->position + this->forwardDir,
+		this->position + this->forwardDir,
 		glm::vec3(0.0f, 1.0f, 0.0f)
 	);
 }
@@ -71,15 +73,16 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 void RSM::update()
 {
 	// Update cam buffer
-	CamUBO ubo{};
+	LightCamUBO ubo{};
 	ubo.vp = this->projectionMatrix * this->viewMatrix;
 	ubo.pos = glm::vec4(this->position, (float) RSM::TEX_SIZE);
-	this->camUbo.updateBuffer(&ubo);
+	ubo.dir = glm::vec4(this->forwardDir, 0.0f);
+	this->lightCamUbo.updateBuffer(&ubo);
 }
 
 void RSM::cleanup()
 {
-	this->camUbo.cleanup();
+	this->lightCamUbo.cleanup();
 
 	this->highResShadowMapTexture.cleanup();
 

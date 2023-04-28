@@ -8,6 +8,13 @@ struct CamUBO
 	glm::vec4 pos;
 };
 
+struct LightCamUBO
+{
+	glm::mat4 vp;
+	glm::vec4 pos;
+	glm::vec4 dir;
+};
+
 // Push constant data (guaranteed 128 bytes)
 struct PCD
 {

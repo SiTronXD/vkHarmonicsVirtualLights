@@ -13,12 +13,13 @@ private:
 
 	Texture2D highResShadowMapTexture;
 
-	UniformBuffer camUbo;
+	UniformBuffer lightCamUbo;
 
 	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;
 
 	glm::vec3 position;
+	glm::vec3 forwardDir;
 
 public:
 	static const VkFormat POSITION_FORMAT = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -39,5 +40,5 @@ public:
 	inline const Texture2D& getDepthTexture() const { return this->depthTexture; }
 	inline const Texture2D& getHighResShadowMapTexture() const { return this->highResShadowMapTexture; }
 
-	inline const Buffer& getCamUbo() const { return this->camUbo; }
+	inline const Buffer& getLightCamUbo() const { return this->lightCamUbo; }
 };

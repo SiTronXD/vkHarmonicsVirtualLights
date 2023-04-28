@@ -132,8 +132,8 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 
 		// Binding 0
 		VkDescriptorBufferInfo rsmUboInfo{};
-		rsmUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
-		rsmUboInfo.range = sizeof(CamUBO);
+		rsmUboInfo.buffer = this->rsm.getLightCamUbo().getVkBuffer(GfxState::getFrameIndex());
+		rsmUboInfo.range = this->rsm.getLightCamUbo().getBufferSize();
 
 		std::array<VkWriteDescriptorSet, 1> writeDescriptorSets
 		{
@@ -300,8 +300,8 @@ void Renderer::renderShadowMap(CommandBuffer& commandBuffer, Scene& scene)
 
 		// Binding 0
 		VkDescriptorBufferInfo shadowMapUboInfo{};
-		shadowMapUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
-		shadowMapUboInfo.range = sizeof(CamUBO);
+		shadowMapUboInfo.buffer = this->rsm.getLightCamUbo().getVkBuffer(GfxState::getFrameIndex());
+		shadowMapUboInfo.range = this->rsm.getLightCamUbo().getBufferSize();
 
 		std::array<VkWriteDescriptorSet, 1> writeDescriptorSets
 		{
@@ -470,8 +470,8 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 
 		// Binding 1
 		VkDescriptorBufferInfo lightCamUboInfo{};
-		lightCamUboInfo.buffer = this->rsm.getCamUbo().getVkBuffer(GfxState::getFrameIndex());
-		lightCamUboInfo.range = this->rsm.getCamUbo().getBufferSize();
+		lightCamUboInfo.buffer = this->rsm.getLightCamUbo().getVkBuffer(GfxState::getFrameIndex());
+		lightCamUboInfo.range = this->rsm.getLightCamUbo().getBufferSize();
 
 		// Binding 2
 		const Texture* brdfLutTexture =

@@ -3,7 +3,8 @@
 layout(set = 0, binding = 0) uniform UniformBufferObject 
 {
 	mat4 vp;
-	vec4 pos;
+	vec4 pos; // (x, y, z, shadow map size)
+	vec4 dir; // (x, y, z, 0.0f)
 } ubo;
 
 layout(push_constant) uniform PushConstantData

@@ -4,6 +4,7 @@
 #define SQRT_TWO 1.4142135623730950488016887242097
 
 #define RSM_FOV (HALF_PI)
+#define COS_HALF_FOV 0.70710678118654752440084436210485
 #define PRIMARY_LIGHT_POWER 400.0f
 
 #define NUM_ANGLES 90
@@ -318,7 +319,7 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
 
     // TODO: double check this
     //color *= PRIMARY_LIGHT_POWER;
-    color *= 5.0f;
+    color *= 20.0f;
 
     return color;
 }

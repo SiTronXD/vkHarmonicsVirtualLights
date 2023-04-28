@@ -6,13 +6,14 @@
 #include "../Common/ColorTransformations.glsl"
 
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
-#define SHADOW_BIAS 0.003f
+#define SHADOW_BIAS 0.005f
 #define SHADOW_MAP_SIZE 256.0f
 
 layout(binding = 1) uniform LightCamUBO 
 {
 	mat4 vp;
 	vec4 pos; // (x, y, z, shadow map size)
+	vec4 dir; // (x, y, z, 0.0f)
 } lightCamUbo;
 
 layout(binding = 2) uniform sampler2D brdfLutTex;
@@ -123,7 +124,7 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 	return F0 + (max(vec3(1.0f - roughness), F0) - F0) * pow(clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
 }
 
-float getShadowFactor()
+float getShadowFactor(vec3 toLightDir, vec3 toLightVec)
 {
 	// Transform to light's coordinate space
 	vec4 lightWorldPos = lightCamUbo.vp * vec4(fragWorldPos, 1.0f);
@@ -149,6 +150,13 @@ float getShadowFactor()
 	float horizResult1 = mix(result2, result3, fractPos.x);
 	float finalResult = mix(horizResult0, horizResult1, fractPos.y);
 
+	// Spotlight cone cutoff
+	float currentCutoff = dot(lightCamUbo.dir.xyz, -toLightDir);
+	finalResult *= smoothstep(0.0f, 1.0f, (currentCutoff - COS_HALF_FOV) * 10.0f / (1.0f - COS_HALF_FOV));
+
+	// Spotlight attenuation
+	finalResult *= 1.0f / max(dot(toLightVec, toLightVec), 0.0001f);
+
 	return finalResult;
 }
 
@@ -163,6 +171,9 @@ void main()
 
 	vec3 N = normalize(fragNormal);
 	vec3 V = normalize(camPos - fragWorldPos);
+
+	vec3 toLightVec = lightPos - fragWorldPos;
+	vec3 L = normalize(toLightVec);
 	/*vec3 R = reflect(-V, N);
 	vec3 albedo = srgbToLinear(texture(albedoTex, fragTexCoord).rgb);
 	float roughness = texture(roughnessTex, fragTexCoord).r * materialProperties.x;
@@ -224,7 +235,7 @@ void main()
 	vec3 color = ambient + Lo;*/
 
 	vec3 color = getIndirectLight(fragTexCoord, fragWorldPos, lightPos, N, V, uint(lightCamUbo.pos.w), fragBrdfIndex);
-	color += getDirectLight(fragWorldPos, lightPos, N, V, fragBrdfIndex) * getShadowFactor();
+	color += getDirectLight(fragWorldPos, lightPos, N, V, fragBrdfIndex) * getShadowFactor(L, toLightVec);
 
 	outColor = vec4(color, 1.0f);
 }
