@@ -32,6 +32,8 @@
 #include "../Graphics/Vulkan/SemaphoreArray.h"
 #include "../Graphics/Vulkan/Surface.h"
 #include "../Graphics/Vulkan/VulkanInstance.h"
+#include "../Graphics/Vulkan/PipelineBarrier.h"
+#include "../Graphics/Vulkan/DescriptorSet.h"
 #include "../Graphics/GfxAllocContext.h"
 #include "../Graphics/GfxSettings.h"
 #include "../Graphics/GfxState.h"

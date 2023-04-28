@@ -108,6 +108,12 @@ private:
 	void resizeWindow();
 	void cleanupImgui();
 
+	void renderRSM(CommandBuffer& commandBuffer, Scene& scene);
+	void renderShadowMap(CommandBuffer& commandBuffer, Scene& scene);
+	void renderScene(CommandBuffer& commandBuffer, Scene& scene);
+	void renderImgui(CommandBuffer& commandBuffer, ImDrawData* imguiDrawData);
+	void computePostProcess(CommandBuffer& commandBuffer, uint32_t imageIndex);
+
 	inline const VkDevice& getVkDevice() const { return this->device.getVkDevice(); }
 
 public:

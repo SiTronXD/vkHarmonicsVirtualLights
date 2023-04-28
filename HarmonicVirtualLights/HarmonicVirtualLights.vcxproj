@@ -159,6 +159,7 @@
     <ClCompile Include="Engine\Graphics\Vulkan\PipelineLayout.cpp" />
     <ClCompile Include="Engine\Graphics\Vulkan\QueueFamilies.cpp" />
     <ClCompile Include="Engine\Graphics\Vulkan\SemaphoreArray.cpp" />
+    <ClCompile Include="Engine\Graphics\Subrenderer.cpp" />
     <ClCompile Include="Engine\Graphics\Vulkan\Surface.cpp" />
     <ClCompile Include="Engine\Graphics\Vulkan\VulkanInstance.cpp" />
     <ClCompile Include="Engine\PCH\pch.cpp">

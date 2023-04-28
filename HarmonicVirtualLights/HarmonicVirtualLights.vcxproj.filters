@@ -207,6 +207,9 @@
     <ClCompile Include="Engine\Graphics\Vulkan\QueryPoolArray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\Subrenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scenes\TestScene.h">
