@@ -209,14 +209,14 @@ float getCoeffLHat(int l, float alpha)
     #endif
 }
 
-float getCoeffL(int l, float alpha, float hvlRadius, float hvlDistance, float shBasisFuncValue)
+float getFactorCoeffL(int l, float alpha)
 {
     // TODO: move out terms which repeats within the same band
 
     float factor = sqrt(4.0 * PI / float(2u * l + 1u));
     float LHat = getCoeffLHat(l, alpha);
 
-    return factor * shBasisFuncValue * LHat;
+    return factor * LHat;
 }
 
 vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uint rsmSize, uint xBrdfIndex)
@@ -224,6 +224,8 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 	vec3 color = vec3(0.0f);
 
     float fRsmSize = float(rsmSize);
+    float gamma = SQRT_TWO * RSM_FOV / fRsmSize;
+    float taylorTanGamma = (gamma + (gamma * gamma * gamma / 3.0f)); // Taylor series approximation of tan(x)
 
     // Transform matrix per shaded point
     mat3x3 worldToTangentMat = getWorldToTangentMat(normal, viewDir);
@@ -261,8 +263,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             float d = length(hvlToPrimaryLight);
             hvlToPrimaryLight /= d;
             
-            float gamma = SQRT_TWO * RSM_FOV / fRsmSize;
-            float hvlRadius = d * (gamma + (gamma * gamma * gamma / 3.0f)); // Taylor series approximation of tan(x)
+            float hvlRadius = d * taylorTanGamma;
             
             // Pythagorean identities
             float sinA = hvlRadius / max(hvlDistance, 0.0001f);
@@ -285,10 +286,13 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
             vec3 dotLF = vec3(0.0f);
             for(int lSH = 0; lSH <= CONVOLUTION_L; ++lSH)
             {
+                float factorCoeffL = getFactorCoeffL(lSH, alpha);
+
                 for(int mSH = -lSH; mSH <= lSH; ++mSH)
                 {
                     int index = lSH * (lSH + 1) + mSH;
-                    float Llm = getCoeffL(lSH, alpha, hvlRadius, hvlDistance, shBasisFuncValues[index]);
+                    float Llm = factorCoeffL * shBasisFuncValues[index];
+
                     dotLF += 
                         Llm * vec3(
                             F.coeffs[index * 3 + 0],    // R
