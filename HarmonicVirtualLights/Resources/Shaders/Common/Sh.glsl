@@ -108,10 +108,14 @@ float y(int l, int m, float cosTheta, float phi)
 
 mat3x3 getWorldToTangentMat(vec3 normal, vec3 approxViewDir)
 {
-    vec3 tangentRight = normalize(cross(normal, approxViewDir)); // TODO: fix edge case where normal == approxViewDir
-    vec3 tangentForward = cross(tangentRight, normal);
+    // Based on coordinate system provided in "A Data-Driven Reflectance Model"
+    // by Wojciech Matusik, Hanspeter Pfister, Matt Brand, Leonard McMillan
+    // http://www.csbio.unc.edu/mcmillan/pubs/sig03_matusik.pdf
 
-    return transpose(mat3x3(tangentRight, normal, tangentForward));
+    vec3 tangentLeft = normalize(cross(normal, approxViewDir)); // TODO: fix edge case where normal == approxViewDir
+    vec3 tangentForward = cross(tangentLeft, normal);
+
+    return transpose(mat3x3(tangentLeft, normal, tangentForward));
 }
 
 uint getBrdfVectorIndex(vec3 normal, vec3 viewDir, uint brdfIndex)
@@ -165,8 +169,6 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
     
     // Relative light direction
     vec3 wLightTangentSpace = getWorldToTangentMat(jNormal, hvlToPrimaryLight) * mWj;
-    /*float cosThetaWLight = wLightTangentSpace.y;
-    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);*/
 
     #if (HVL_EMISSION_L == 2)
         float shBasisFuncValues[9];
@@ -211,8 +213,6 @@ float getCoeffLHat(int l, float alpha)
 
 float getFactorCoeffL(int l, float alpha)
 {
-    // TODO: move out terms which repeats within the same band
-
     float factor = sqrt(4.0 * PI / float(2u * l + 1u));
     float LHat = getCoeffLHat(l, alpha);
 
@@ -272,8 +272,6 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 
             // Relative light direction
             vec3 wLightTangentSpace = worldToTangentMat * wLight;
-            /*float cosThetaWLight = wLightTangentSpace.y;
-            float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);*/
 
             #if (CONVOLUTION_L == 4)
                 SHEval5(
@@ -323,8 +321,6 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
 
     // Relative light direction
     vec3 wLightTangentSpace = getWorldToTangentMat(normal, viewDir) * toLight;
-    /*float cosThetaWLight = wLightTangentSpace.y;
-    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);*/
 
     #if (DIRECT_CONVOLUTION_L == 4)
         float shBasisFuncValues[25];
