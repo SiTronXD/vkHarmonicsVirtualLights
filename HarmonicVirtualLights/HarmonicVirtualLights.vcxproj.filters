@@ -435,5 +435,6 @@
   <ItemGroup>
     <None Include="Resources\Shaders\Common\Sh.glsl" />
     <None Include="Resources\Shaders\Common\ColorTransformations.glsl" />
+    <None Include="Resources\Shaders\Common\ShEfficientEval.glsl" />
   </ItemGroup>
 </Project>

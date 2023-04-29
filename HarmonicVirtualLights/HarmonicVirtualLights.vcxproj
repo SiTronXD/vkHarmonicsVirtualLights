@@ -318,6 +318,10 @@
     <CustomBuild Include="Resources\Shaders\VertexShaders\ShadowMap.vert">
       <FileType>Document</FileType>
     </CustomBuild>
+    <None Include="Resources\Shaders\Common\ShEfficientEval.glsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

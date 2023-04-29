@@ -13,6 +13,7 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * "vkHarmonicsVirtualLights"*
 * Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
 * Optimize smoothstep
+* reduce normal format to R32G32
 
 # Vulkan features used
 * Version 1.3

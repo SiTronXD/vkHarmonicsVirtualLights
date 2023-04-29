@@ -460,10 +460,10 @@ void Renderer::draw(Scene& scene)
 	Log::write("elapsedFrames: " + std::to_string(this->elapsedFrames) + "   rsm ms: " + std::to_string(rsmMs) + "   sm ms: " + std::to_string(smMs) + "   scene ms: " + std::to_string(sceneMs));
 	
 	// Print average times after 500 frames
-	/*if (this->elapsedFrames >= 500.0f - 0.5f)
+	if (this->elapsedFrames >= 500.0f - 0.5f)
 	{
 		Log::alert("rsm ms: " + std::to_string(this->avgRsmMs) + "   sm ms: " + std::to_string(this->avgSmMs) + "   scene ms: " + std::to_string(this->avgSceneMs));
-	}*/
+	}
 #endif
 
 	// Next frame index

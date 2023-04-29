@@ -1,3 +1,7 @@
+#extension GL_GOOGLE_include_directive: require
+
+#include "ShEfficientEval.glsl"
+
 #define PI 3.1415926535897932384626433832795
 #define HALF_PI 1.5707963267948966192313216916398
 #define SQRT_PI 1.7724538509055160272981674833411
@@ -160,8 +164,16 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
     
     // Relative light direction
     vec3 wLightTangentSpace = getWorldToTangentMat(jNormal, hvlToPrimaryLight) * mWj;
-    float cosThetaWLight = wLightTangentSpace.y;
-    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);
+    /*float cosThetaWLight = wLightTangentSpace.y;
+    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);*/
+
+    #if (HVL_EMISSION_L == 2)
+        float shBasisFuncValues[9];
+        SHEval3(
+            wLightTangentSpace,
+            shBasisFuncValues
+        );
+    #endif
 
     // Obtain coefficient vector F (without cosine term)
     const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(jNormal, hvlToPrimaryLight, yBrdfIndex)];
@@ -171,14 +183,13 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
         for(int mSH = -lSH; mSH <= lSH; ++mSH)
         {
             int index = lSH * (lSH + 1) + mSH;
-            float shBasisFunc = y(lSH, mSH, cosThetaWLight, phiWLight);
 
             dotFY += 
                 vec3(
                     FPrime.coeffs[index * 3 + 0],  // R
                     FPrime.coeffs[index * 3 + 1],  // G
                     FPrime.coeffs[index * 3 + 2]   // B
-                ) * shBasisFunc;
+                ) * shBasisFuncValues[index];
         }
     }
 
@@ -195,15 +206,14 @@ float getCoeffLHat(int l, float alpha)
 	return sqrt(PI / float(2u * l + 1u)) * (P(l - 1, 0, alpha) - P(l + 1, 0, alpha));
 }
 
-float getCoeffL(int l, int m, float alpha, float hvlRadius, float hvlDistance, float cosThetaWLight, float phiWLight)
+float getCoeffL(int l, float alpha, float hvlRadius, float hvlDistance, float shBasisFuncValue)
 {
     // TODO: move out terms which repeats within the same band
 
     float factor = sqrt(4.0 * PI / float(2u * l + 1u));
-    float shBasisFunc = y(l, m, cosThetaWLight, phiWLight);
     float LHat = getCoeffLHat(l, alpha);
 
-    return factor * shBasisFunc * LHat;
+    return factor * shBasisFuncValue * LHat;
 }
 
 vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uint rsmSize, uint xBrdfIndex)
@@ -217,7 +227,10 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 
     // Obtain coefficient vector F (with cosine term)
     const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
-    
+    #if (CONVOLUTION_L == 4)
+        float shBasisFuncValues[25];
+    #endif
+
     // Loop through each HVL
 	for(uint y = 0; y < rsmSize; ++y)
 	{
@@ -255,8 +268,15 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
 
             // Relative light direction
             vec3 wLightTangentSpace = worldToTangentMat * wLight;
-            float cosThetaWLight = wLightTangentSpace.y;
-            float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);
+            /*float cosThetaWLight = wLightTangentSpace.y;
+            float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);*/
+
+            #if (CONVOLUTION_L == 4)
+                SHEval5(
+                    wLightTangentSpace,
+                    shBasisFuncValues
+                );
+            #endif
 
             // L * F
             vec3 dotLF = vec3(0.0f);
@@ -265,7 +285,7 @@ vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, 
                 for(int mSH = -lSH; mSH <= lSH; ++mSH)
                 {
                     int index = lSH * (lSH + 1) + mSH;
-                    float Llm = float(getCoeffL(lSH, mSH, alpha, hvlRadius, hvlDistance, cosThetaWLight, phiWLight));
+                    float Llm = getCoeffL(lSH, alpha, hvlRadius, hvlDistance, shBasisFuncValues[index]);
                     dotLF += 
                         Llm * vec3(
                             F.coeffs[index * 3 + 0],    // R
@@ -296,8 +316,16 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
 
     // Relative light direction
     vec3 wLightTangentSpace = getWorldToTangentMat(normal, viewDir) * toLight;
-    float cosThetaWLight = wLightTangentSpace.y;
-    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);
+    /*float cosThetaWLight = wLightTangentSpace.y;
+    float phiWLight = atan(wLightTangentSpace.z, wLightTangentSpace.x);*/
+
+    #if (DIRECT_CONVOLUTION_L == 4)
+        float shBasisFuncValues[25];
+        SHEval5(
+            wLightTangentSpace,
+            shBasisFuncValues
+        );
+    #endif
 
     // Obtain coefficient vector F (with cosine term)
     // TODO: remove multiple SH set accesses across direct/indirect calculations
@@ -307,14 +335,13 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
         for(int mSH = -lSH; mSH <= lSH; ++mSH)
         {
             int index = lSH * (lSH + 1) + mSH;
-            float shBasisFunc = y(lSH, mSH, cosThetaWLight, phiWLight);
 
             color += 
                 vec3(
                     F.coeffs[index * 3 + 0],  // R
                     F.coeffs[index * 3 + 1],  // G
                     F.coeffs[index * 3 + 2]   // B
-                ) * shBasisFunc;
+                ) * shBasisFuncValues[index];
         }
     }
 
