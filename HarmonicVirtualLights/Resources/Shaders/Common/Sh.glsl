@@ -1,6 +1,7 @@
 #extension GL_GOOGLE_include_directive: require
 
 #include "ShEfficientEval.glsl"
+#include "AssocLegEfficientEval.glsl"
 
 #define PI 3.1415926535897932384626433832795
 #define HALF_PI 1.5707963267948966192313216916398
@@ -203,7 +204,9 @@ float getCoeffLHat(int l, float alpha)
 		return SQRT_PI * (1.0 - alpha);
 	}
 	
-	return sqrt(PI / float(2u * l + 1u)) * (P(l - 1, 0, alpha) - P(l + 1, 0, alpha));
+    #if (CONVOLUTION_L <= 4)
+        return sqrt(PI / float(2u * l + 1u)) * (evalAssocLeg(l - 1, alpha) - evalAssocLeg(l + 1, alpha));
+    #endif
 }
 
 float getCoeffL(int l, float alpha, float hvlRadius, float hvlDistance, float shBasisFuncValue)
