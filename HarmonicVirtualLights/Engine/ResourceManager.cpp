@@ -39,8 +39,9 @@ void ResourceManager::cleanup()
 	this->textures.shrink_to_fit();
 }
 
-uint32_t ResourceManager::addMesh(const std::string& filePath)
+uint32_t ResourceManager::addMesh(const std::string& filePath, Material& outputMeshMaterial)
 {
+	// Mesh index
 	uint32_t createdMeshIndex = uint32_t(this->meshes.size());
 
 	// Mesh
@@ -56,6 +57,9 @@ uint32_t ResourceManager::addMesh(const std::string& filePath)
 		*this->gfxAllocContext, 
 		meshData
 	);
+
+	// Material
+	outputMeshMaterial.materialSetIndex = this->addMaterial(createdMesh);
 
 	return createdMeshIndex;
 }
@@ -193,4 +197,14 @@ uint32_t ResourceManager::addBRDF(const std::string& filePath)
 	}
 
 	return createdBrdfIndex;
+}
+
+uint32_t ResourceManager::addMaterial(const Mesh& mesh)
+{
+	uint32_t materialIndex = uint32_t(this->materialSets.size());
+
+	this->materialSets.push_back(MaterialSet());
+	this->materialSets[materialIndex].createMaterialSet(mesh);
+
+	return materialIndex;
 }

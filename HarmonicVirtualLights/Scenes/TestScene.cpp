@@ -25,8 +25,6 @@ void TestScene::init()
 	uint32_t brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
 	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/red-fabric.shbrdf");
 
-	uint32_t sphereMeshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj");
-	uint32_t boxMeshId = this->getResourceManager().addMesh("Resources/Models/box.obj");
 	uint32_t whiteTextureId = this->getResourceManager().addTexture("Resources/Textures/white.png");
 
 	// Test entity
@@ -38,12 +36,16 @@ void TestScene::init()
 		Transform& transform = this->getComponent<Transform>(testEntity);
 		transform.modelMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
-		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
-		modelMesh.meshId = sphereMeshId;
-
 		Material& material = this->getComponent<Material>(testEntity);
 		material.albedoTextureId = whiteTextureId;
-		material.brdfId = brdfId0;
+
+		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
+		modelMesh.meshId = this->getResourceManager().addMesh("Resources/Models/sphereTest.obj", material);
+
+		// Modify brdf index
+		SubmeshMaterial submeshMaterial{};
+		submeshMaterial.brdfIndex = brdfId0;
+		this->getResourceManager().getMaterialSet(material.materialSetIndex).applyUniformSubmeshMaterial(submeshMaterial);
 	}
 
 	// Walls
@@ -62,12 +64,16 @@ void TestScene::init()
 		Transform& transform = this->getComponent<Transform>(testEntity);
 		transform.modelMat = wallTransforms[i];
 
-		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
-		modelMesh.meshId = boxMeshId;
-
 		Material& material = this->getComponent<Material>(testEntity);
 		material.albedoTextureId = whiteTextureId;
-		material.brdfId = brdfId1;
+
+		MeshComponent& modelMesh = this->getComponent<MeshComponent>(testEntity);
+		modelMesh.meshId = this->getResourceManager().addMesh("Resources/Models/box.obj", material);
+
+		// Modify brdf index
+		SubmeshMaterial submeshMaterial{};
+		submeshMaterial.brdfIndex = brdfId1;
+		this->getResourceManager().getMaterialSet(material.materialSetIndex).applyUniformSubmeshMaterial(submeshMaterial);
 	}
 
 	// Initial camera setup

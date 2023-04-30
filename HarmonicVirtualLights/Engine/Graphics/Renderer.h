@@ -113,6 +113,11 @@ private:
 	void cleanupImgui();
 
 	void renderMesh(CommandBuffer& commandBuffer, const Mesh& mesh);
+	void renderMeshWithBrdf(
+		CommandBuffer& commandBuffer, 
+		const Mesh& mesh, 
+		const Material& material,
+		PCD& pushConstantData);
 	void renderRSM(CommandBuffer& commandBuffer, Scene& scene);
 	void renderShadowMap(CommandBuffer& commandBuffer, Scene& scene);
 	void renderScene(CommandBuffer& commandBuffer, Scene& scene);

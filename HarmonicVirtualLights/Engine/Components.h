@@ -18,13 +18,11 @@ struct Material
 	char vertexShader[SHADER_NAME_CHAR_SIZE]{};
 	char fragmentShader[SHADER_NAME_CHAR_SIZE]{};
 
-	float roughness = 1.0f;
-	float metallic = 1.0f;
-
 	bool castShadows = true;
 
 	uint32_t albedoTextureId = ~0u;
-	uint32_t brdfId = 0; // Default to avoid issues within shader
+
+	uint32_t materialSetIndex = ~0u;
 
 	uint32_t rsmPipelineIndex = ~0u;
 	uint32_t shadowMapPipelineIndex = ~0u;

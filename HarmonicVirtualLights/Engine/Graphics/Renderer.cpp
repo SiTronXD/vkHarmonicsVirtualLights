@@ -259,6 +259,11 @@ void Renderer::createShCoefficientBuffer(Scene& scene)
 {
 	std::vector<SHData> shSets;
 
+	if (this->resourceManager->getNumBRDFs() == 0)
+	{
+		Log::error("This scene does not contain any materials.");
+	}
+
 	// For each BRDF data within a material
 	for (size_t i = 0; i < this->resourceManager->getNumBRDFs(); ++i)
 	{
@@ -633,7 +638,7 @@ void Renderer::initForScene(Scene& scene)
 
 		// Mesh
 		MeshComponent skyboxMesh{};
-		skyboxMesh.meshId = this->resourceManager->addMesh("Resources/Models/invertedCube.obj");
+		skyboxMesh.meshId = this->resourceManager->addMesh("Resources/Models/invertedCube.obj", skyboxMaterial);
 
 		// Entity
 		uint32_t skybox = scene.createEntity();

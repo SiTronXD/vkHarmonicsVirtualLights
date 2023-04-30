@@ -19,6 +19,35 @@ void Renderer::renderMesh(CommandBuffer& commandBuffer, const Mesh& mesh)
 	}
 }
 
+void Renderer::renderMeshWithBrdf(
+	CommandBuffer& commandBuffer, 
+	const Mesh& mesh, 
+	const Material& material,
+	PCD& pushConstantData)
+{
+	const std::vector<Submesh>& submeshes = mesh.getSubmeshes();
+	const std::vector<SubmeshMaterial>& submeshMaterials = 
+		this->resourceManager->getMaterialSet(material.materialSetIndex).getMaterialSet();
+
+	// Record binding vertex/index buffer
+	commandBuffer.bindVertexBuffer(mesh.getVertexBuffer());
+	commandBuffer.bindIndexBuffer(mesh.getIndexBuffer());
+
+	// Record draws
+	for (size_t i = 0, numSubmeshes = submeshes.size(); i < numSubmeshes; ++i)
+	{
+		// BRDF index per submesh
+		pushConstantData.brdfProperties.x = submeshMaterials[i].brdfIndex;
+		commandBuffer.pushConstant(
+			this->gfxResManager.getGraphicsPipelineLayout(), // Can be fixed with shader reflection
+			&pushConstantData
+		);
+
+		const Submesh& currentSubmesh = submeshes[i];
+		commandBuffer.drawIndexed(currentSubmesh.numIndices, currentSubmesh.startIndex);
+	}
+}
+
 void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 {
 	VkExtent2D rsmExtent{ RSM::TEX_SIZE, RSM::TEX_SIZE };
@@ -178,7 +207,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 
 					// Push descriptor set update
 					commandBuffer.pushDescriptorSet(
-						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
+						this->gfxResManager.getGraphicsPipelineLayout(), // Can be fixed with shader reflection
 						0,
 						uint32_t(writeDescriptorSets.size()),
 						writeDescriptorSets.data()
@@ -187,15 +216,10 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 					// Push constant data
 					PCD pushConstantData{};
 					pushConstantData.modelMat = transform.modelMat;
-					pushConstantData.brdfProperties.x = material.brdfId;
-					commandBuffer.pushConstant(
-						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
-						&pushConstantData
-					);
-
+					
 					// Mesh
 					const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-					this->renderMesh(commandBuffer, currentMesh);
+					this->renderMeshWithBrdf(commandBuffer, currentMesh, material, pushConstantData);
 				}
 			}
 		);
@@ -340,7 +364,7 @@ void Renderer::renderShadowMap(CommandBuffer& commandBuffer, Scene& scene)
 
 					// Push descriptor set update
 					commandBuffer.pushDescriptorSet(
-						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
+						this->gfxResManager.getGraphicsPipelineLayout(), // Can be fixed with shader reflection
 						0,
 						uint32_t(writeDescriptorSets.size()),
 						writeDescriptorSets.data()
@@ -350,7 +374,7 @@ void Renderer::renderShadowMap(CommandBuffer& commandBuffer, Scene& scene)
 					PCD pushConstantData{};
 					pushConstantData.modelMat = transform.modelMat;
 					commandBuffer.pushConstant(
-						this->gfxResManager.getGraphicsPipelineLayout(), // TODO: fix with shader reflection
+						this->gfxResManager.getGraphicsPipelineLayout(), // Can be fixed with shader reflection
 						&pushConstantData
 					);
 
@@ -587,17 +611,10 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 				// Push constant data
 				PCD pushConstantData{};
 				pushConstantData.modelMat = transform.modelMat;
-				pushConstantData.materialProperties.x = material.roughness;
-				pushConstantData.materialProperties.y = material.metallic;
-				pushConstantData.brdfProperties.x = material.brdfId;
-				commandBuffer.pushConstant(
-					this->gfxResManager.getGraphicsPipelineLayout(),
-					&pushConstantData
-				);
 
 				// Mesh
 				const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-				this->renderMesh(commandBuffer, currentMesh);
+				this->renderMeshWithBrdf(commandBuffer, currentMesh, material, pushConstantData);
 			}
 		);
 	}

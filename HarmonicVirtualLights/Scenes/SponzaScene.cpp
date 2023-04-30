@@ -18,8 +18,7 @@ void SponzaScene::init()
 
 	// Assets
 	uint32_t brdfId0 = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
-
-	uint32_t sponzaMeshId = this->getResourceManager().addMesh("Resources/Models/sponzaSmall.obj");
+	uint32_t brdfId1 = this->getResourceManager().addBRDF("Resources/BRDFs/red-fabric.shbrdf");
 
 	uint32_t whiteTextureId = this->getResourceManager().addTexture("Resources/Textures/white.png");
 
@@ -32,12 +31,16 @@ void SponzaScene::init()
 		Transform& transform = this->getComponent<Transform>(sponzaEntity);
 		transform.modelMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
-		MeshComponent& modelMesh = this->getComponent<MeshComponent>(sponzaEntity);
-		modelMesh.meshId = sponzaMeshId;
-
 		Material& material = this->getComponent<Material>(sponzaEntity);
 		material.albedoTextureId = whiteTextureId;
-		material.brdfId = brdfId0;
+
+		MeshComponent& modelMesh = this->getComponent<MeshComponent>(sponzaEntity);
+		modelMesh.meshId = 
+			this->getResourceManager().addMesh("Resources/Models/sponzaSmall.obj", material);
+
+		SubmeshMaterial submeshMaterial{};
+		submeshMaterial.brdfIndex = brdfId1;
+		this->getResourceManager().getMaterialSet(material.materialSetIndex).applySubmeshMaterial(7, submeshMaterial);
 	}
 
 	// Initial camera setup

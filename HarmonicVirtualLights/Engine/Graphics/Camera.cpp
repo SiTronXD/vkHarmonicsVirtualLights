@@ -23,17 +23,25 @@ void Camera::updateDirVectors()
 
 void Camera::updateMatrices()
 {
+	// Get framebuffer size, to avoid division by 0 in aspect ratio
+	int framebufferWidth, framebufferHeight;
+	this->window->getFramebufferSize(framebufferWidth, framebufferHeight);
+
+	// View/projection matrices
 	this->viewMatrix = glm::lookAt(
 		this->position,
 		this->position + this->forwardDir,
 		glm::vec3(0.0f, 1.0f, 0.0f)
 	);
-	this->projectionMatrix = glm::perspective(
-		glm::radians(90.0f),
-		this->window->getAspectRatio(),
-		0.1f,
-		100.0f
-	);
+	if (framebufferHeight != 0)
+	{
+		this->projectionMatrix = glm::perspective(
+			glm::radians(90.0f),
+			this->window->getAspectRatio(),
+			0.1f,
+			100.0f
+		);
+	}
 }
 
 void Camera::recalculate()
