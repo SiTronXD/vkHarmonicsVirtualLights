@@ -13,7 +13,6 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * reduce normal format to R32G32
 * Fix direct + indirect contribution relation
 * Remove unused assets
-* Resource manager: avoid readding new meshes
 
 # Vulkan features used
 * Version 1.3

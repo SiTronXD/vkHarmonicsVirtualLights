@@ -41,6 +41,14 @@ void ResourceManager::cleanup()
 
 uint32_t ResourceManager::addMesh(const std::string& filePath, Material& outputMeshMaterial)
 {
+	// Check if mesh has already been added
+	if (this->nameToMesh.count(filePath) != 0)
+	{
+		outputMeshMaterial.materialSetIndex = this->nameToMesh[filePath].second;
+
+		return this->nameToMesh[filePath].first;
+	}
+
 	// Mesh index
 	uint32_t createdMeshIndex = uint32_t(this->meshes.size());
 
@@ -59,16 +67,26 @@ uint32_t ResourceManager::addMesh(const std::string& filePath, Material& outputM
 	);
 
 	// Material
-	outputMeshMaterial.materialSetIndex = this->addMaterial(createdMesh);
+	uint32_t defaultMaterialIndex = this->addMaterial(createdMesh);
+	outputMeshMaterial.materialSetIndex = defaultMaterialIndex;
+
+	this->nameToMesh.insert({ filePath, { createdMeshIndex, defaultMaterialIndex } });
 
 	return createdMeshIndex;
 }
 
 uint32_t ResourceManager::addTexture(const std::string& filePath)
 {
+	// Check if texture has already been added
+	if (this->nameToTexture.count(filePath) != 0)
+	{
+		return this->nameToTexture[filePath];
+	}
+
 	// Texture resource
 	uint32_t createdTextureIndex = this->addEmptyTexture();
 	Texture2D* createdTexture = static_cast<Texture2D*>(this->textures[createdTextureIndex].get());
+	this->nameToTexture.insert({ filePath, createdTextureIndex });
 
 	// Load texture
 	createdTexture->createFromFile(
@@ -91,6 +109,12 @@ uint32_t ResourceManager::addEmptyTexture()
 
 uint32_t ResourceManager::addCubeMap(const std::vector<std::string>& filePaths)
 {
+	// Check if texture has already been added
+	if (this->nameToTexture.count(filePaths[0]) != 0)
+	{
+		return this->nameToTexture[filePaths[0]];
+	}
+
 	// HDR for one single file
 	if (filePaths.size() == 1)
 	{
@@ -108,6 +132,7 @@ uint32_t ResourceManager::addCubeMap(const std::vector<std::string>& filePaths)
 	}
 
 	uint32_t createdTextureIndex = uint32_t(this->textures.size());
+	this->nameToTexture.insert({ filePaths[0], createdTextureIndex });
 
 	// Load and create cube map resource
 	std::shared_ptr<TextureCube> createdCubeMap(new TextureCube());

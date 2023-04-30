@@ -18,6 +18,8 @@ private:
 	uint32_t numCoefficientsPerAngle;
 	uint32_t numCoefficientsCosTermPerAngle;
 
+	std::unordered_map<std::string, uint32_t> nameToTexture;
+	std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> nameToMesh; // { meshId, defaultMaterialId }
 	std::unordered_map<std::string, uint32_t> nameToBrdf;
 
 	std::vector<std::shared_ptr<Texture>> textures;
