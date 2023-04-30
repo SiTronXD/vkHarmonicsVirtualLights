@@ -112,6 +112,7 @@ private:
 	void resizeWindow();
 	void cleanupImgui();
 
+	void renderMesh(CommandBuffer& commandBuffer, const Mesh& mesh);
 	void renderRSM(CommandBuffer& commandBuffer, Scene& scene);
 	void renderShadowMap(CommandBuffer& commandBuffer, Scene& scene);
 	void renderScene(CommandBuffer& commandBuffer, Scene& scene);

@@ -24,12 +24,22 @@ void MeshData::create(std::vector<Vertex>& vertices, std::vector<uint32_t>& indi
 
 bool MeshData::loadOBJ(const std::string& filePath)
 {
-	// Load model (assume triangulation)
+	// Load mesh
 	fastObjMesh* loadedObj = fast_obj_read(filePath.c_str());
 	if (!loadedObj)
 	{
-		Log::error("Failed to load model: " + filePath);
+		Log::error("Failed to load mesh: " + filePath);
 		return false;
+	}
+
+	// Make sure entire mesh is triangulated
+	for (unsigned int i = 0; i < loadedObj->face_count; ++i)
+	{
+		if (loadedObj->face_vertices[i] != 3)
+		{
+			Log::error(filePath + " is not triangulated.");
+			return false;
+		}
 	}
 
 	// Positions
@@ -58,6 +68,16 @@ bool MeshData::loadOBJ(const std::string& filePath)
 		/*v.normal.x = loadedObj->normals[loadedObj->indices[i].n * 3 + 0];
 		v.normal.y = loadedObj->normals[loadedObj->indices[i].n * 3 + 1];
 		v.normal.z = loadedObj->normals[loadedObj->indices[i].n * 3 + 2];*/
+	}
+
+	// Submeshes
+	this->submeshes.resize(loadedObj->object_count);
+	for (size_t i = 0; i < this->submeshes.size(); ++i)
+	{
+		const fastObjGroup& currentObject = loadedObj->objects[i];
+
+		this->submeshes[i].startIndex = currentObject.index_offset;
+		this->submeshes[i].numIndices = currentObject.face_count * 3;
 	}
 
 	// Normals

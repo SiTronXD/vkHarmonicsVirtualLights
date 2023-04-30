@@ -3,6 +3,22 @@
 #include "../ResourceManager.h"
 #include "Texture/TextureCube.h"
 
+void Renderer::renderMesh(CommandBuffer& commandBuffer, const Mesh& mesh)
+{
+	const std::vector<Submesh>& submeshes = mesh.getSubmeshes();
+
+	// Record binding vertex/index buffer
+	commandBuffer.bindVertexBuffer(mesh.getVertexBuffer());
+	commandBuffer.bindIndexBuffer(mesh.getIndexBuffer());
+
+	// Record draws
+	for (size_t i = 0, numSubmeshes = submeshes.size(); i < numSubmeshes; ++i)
+	{
+		const Submesh& currentSubmesh = submeshes[i];
+		commandBuffer.drawIndexed(currentSubmesh.numIndices, currentSubmesh.startIndex);
+	}
+}
+
 void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 {
 	VkExtent2D rsmExtent{ RSM::TEX_SIZE, RSM::TEX_SIZE };
@@ -177,15 +193,9 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 						&pushConstantData
 					);
 
-					// Render mesh
+					// Mesh
 					const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-
-					// Record binding vertex/index buffer
-					commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-					commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer());
-
-					// Record draw
-					commandBuffer.drawIndexed(currentMesh.getNumIndices());
+					this->renderMesh(commandBuffer, currentMesh);
 				}
 			}
 		);
@@ -344,15 +354,9 @@ void Renderer::renderShadowMap(CommandBuffer& commandBuffer, Scene& scene)
 						&pushConstantData
 					);
 
-					// Render mesh
+					// Mesh
 					const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-
-					// Record binding vertex/index buffer
-					commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-					commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer());
-
-					// Record draw
-					commandBuffer.drawIndexed(currentMesh.getNumIndices());
+					this->renderMesh(commandBuffer, currentMesh);
 				}
 			}
 		);
@@ -565,41 +569,35 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 					numPipelineSwitches++;
 				}
 
-		// Binding 9
-		const Texture* albedoTexture =
-			this->resourceManager->getTexture(material.albedoTextureId);
-		albedoImageInfo.imageView = albedoTexture->getVkImageView();
-		albedoImageInfo.sampler = albedoTexture->getVkSampler();
+				// Binding 9
+				const Texture* albedoTexture =
+					this->resourceManager->getTexture(material.albedoTextureId);
+				albedoImageInfo.imageView = albedoTexture->getVkImageView();
+				albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
-		// Push descriptor set update
-		writeDescriptorSets[9].pImageInfo = &albedoImageInfo;
-		commandBuffer.pushDescriptorSet(
-			this->gfxResManager.getGraphicsPipelineLayout(),
-			0,
-			uint32_t(writeDescriptorSets.size()),
-			writeDescriptorSets.data()
-		);
+				// Push descriptor set update
+				writeDescriptorSets[9].pImageInfo = &albedoImageInfo;
+				commandBuffer.pushDescriptorSet(
+					this->gfxResManager.getGraphicsPipelineLayout(),
+					0,
+					uint32_t(writeDescriptorSets.size()),
+					writeDescriptorSets.data()
+				);
 
-		// Push constant data
-		PCD pushConstantData{};
-		pushConstantData.modelMat = transform.modelMat;
-		pushConstantData.materialProperties.x = material.roughness;
-		pushConstantData.materialProperties.y = material.metallic;
-		pushConstantData.brdfProperties.x = material.brdfId;
-		commandBuffer.pushConstant(
-			this->gfxResManager.getGraphicsPipelineLayout(),
-			&pushConstantData
-		);
+				// Push constant data
+				PCD pushConstantData{};
+				pushConstantData.modelMat = transform.modelMat;
+				pushConstantData.materialProperties.x = material.roughness;
+				pushConstantData.materialProperties.y = material.metallic;
+				pushConstantData.brdfProperties.x = material.brdfId;
+				commandBuffer.pushConstant(
+					this->gfxResManager.getGraphicsPipelineLayout(),
+					&pushConstantData
+				);
 
-		// Render mesh
-		const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
-
-		// Record binding vertex/index buffer
-		commandBuffer.bindVertexBuffer(currentMesh.getVertexBuffer());
-		commandBuffer.bindIndexBuffer(currentMesh.getIndexBuffer());
-
-		// Record draw
-		commandBuffer.drawIndexed(currentMesh.getNumIndices());
+				// Mesh
+				const Mesh& currentMesh = this->resourceManager->getMesh(meshComp.meshId);
+				this->renderMesh(commandBuffer, currentMesh);
 			}
 		);
 	}

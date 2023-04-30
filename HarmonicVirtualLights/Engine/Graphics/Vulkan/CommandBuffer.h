@@ -44,7 +44,7 @@ public:
 	void pushConstant(
 		const PipelineLayout& pipelineLayout,
 		const void* data);
-	void drawIndexed(uint32_t numIndices);
+	void drawIndexed(uint32_t numIndices, uint32_t firstIndex);
 	void dispatch(uint32_t groupCountX, uint32_t groupCountY = 1, uint32_t groupCountZ = 1);
 	void blit(
 		const VkImage& srcImage, VkImageLayout srcImageLayout,

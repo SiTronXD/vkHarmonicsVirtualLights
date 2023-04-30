@@ -17,6 +17,8 @@ void Mesh::createMesh(
 	this->vertexBuffer.createVertexBuffer(gfxAllocContext, meshData.getVertices());
 	this->indexBuffer.createIndexBuffer(gfxAllocContext, meshData.getIndices());
 
+	this->submeshes = std::vector<Submesh>(meshData.getSubmeshes());
+
 	this->numIndices = uint32_t(meshData.getIndices().size());
 }
 

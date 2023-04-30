@@ -3,7 +3,6 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 
 # TODO:
 * Ethics in report
-* Double check azimuthal angles
 * Double check clamping range for half angle
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
 * Use storage images instead of sampled images
@@ -13,12 +12,18 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Optimize smoothstep
 * reduce normal format to R32G32
 * Fix direct + indirect contribution relation
+* Remove unused assets
 
 # Vulkan features used
 * Version 1.3
 * Dynamic rendering
 * Synchronization 2
 * Push descriptors
+
+# Assets used
+* HDR skybox (Grace Cathedral): https://www.pauldebevec.com/Probes/
+* Sponza model: https://github.com/jimmiebergmann/Sponza
+* MERL BRDF database: https://cdfg.csail.mit.edu/wojciech/brdfdatabase
 
 # Libraries and APIs used
 * Dear ImGUI: GUI for debugging

@@ -203,6 +203,7 @@
     <ClCompile Include="Engine\Dev\StrHelper.cpp" />
     <ClCompile Include="Engine\Graphics\Buffer\UniformBuffer.cpp" />
     <ClCompile Include="Engine\Graphics\Buffer\StorageBuffer.cpp" />
+    <ClCompile Include="Scenes\SponzaScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Graphics\BRDFData.h" />
@@ -274,6 +275,7 @@
     <ClInclude Include="Engine\Dev\StrHelper.h" />
     <ClInclude Include="Engine\Graphics\Buffer\UniformBuffer.h" />
     <ClInclude Include="Engine\Graphics\Buffer\StorageBuffer.h" />
+    <ClInclude Include="Scenes\SponzaScene.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Resources\Shaders\ComputeShaders\BrdfLut.comp">

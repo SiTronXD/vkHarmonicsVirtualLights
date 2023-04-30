@@ -141,9 +141,9 @@ void CommandBuffer::pushConstant(
 	);
 }
 
-void CommandBuffer::drawIndexed(uint32_t numIndices)
+void CommandBuffer::drawIndexed(uint32_t numIndices, uint32_t firstIndex)
 {
-	vkCmdDrawIndexed(this->commandBuffer, numIndices, 1, 0, 0, 0);
+	vkCmdDrawIndexed(this->commandBuffer, numIndices, 1, firstIndex, 0, 0);
 }
 
 void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
