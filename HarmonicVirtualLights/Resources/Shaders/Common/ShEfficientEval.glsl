@@ -1,7 +1,7 @@
 void rotVec(vec3 inVec, inout float outX, inout float outY, inout float outZ)
 {
-	outX = inVec.x;
-	outY = inVec.z;
+	outX = inVec.z;
+	outY = inVec.x;
 	outZ = inVec.y;
 }
 
