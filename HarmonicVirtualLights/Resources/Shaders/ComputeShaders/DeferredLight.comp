@@ -90,8 +90,11 @@ void main()
 		vec3 L = normalize(toLightVec);
 		vec3 V = normalize(pc.camPos.xyz - worldPos);
 
+		int startHvlIndex = 0;
+		int numHvlsPerThread = 8*8;
+
 		// Environment
-		color = getIndirectLight(worldPos, lightPos, worldNormal.xyz, V, uint(lightCamUbo.pos.w), xBrdfIndex);
+		color = getIndirectLight(worldPos, lightPos, worldNormal.xyz, V, uint(lightCamUbo.pos.w), xBrdfIndex/*, startHvlIndex, numHvlsPerThread*/);
 		color += getDirectLight(worldPos, lightPos, worldNormal.xyz, V, xBrdfIndex) * getShadowFactor(worldPos, L, toLightVec);
 	}
 	
