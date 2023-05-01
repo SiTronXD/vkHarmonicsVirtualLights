@@ -13,6 +13,7 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * reduce normal format to R32G32
 * Fix direct + indirect contribution relation
 * Remove unused assets
+* Consider removing spotlight cutoff, since HVLs are distributed in a square
 
 # Vulkan features used
 * Version 1.3
