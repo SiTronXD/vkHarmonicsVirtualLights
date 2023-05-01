@@ -443,6 +443,9 @@
     <CustomBuild Include="Resources\Shaders\FragmentShaders\Rsm.frag" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\Rsm.vert" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\ShadowMap.vert" />
+    <CustomBuild Include="Resources\Shaders\VertexShaders\DeferredGeom.vert" />
+    <CustomBuild Include="Resources\Shaders\FragmentShaders\DeferredGeom.frag" />
+    <CustomBuild Include="Resources\Shaders\ComputeShaders\DeferredLight.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Shaders\Common\Sh.glsl" />

@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "../ResourceManager.h"
 #include "Texture/TextureCube.h"
+#include "../Components.h"
 
 void Renderer::renderMesh(CommandBuffer& commandBuffer, const Mesh& mesh)
 {
@@ -402,7 +403,7 @@ void Renderer::renderShadowMap(CommandBuffer& commandBuffer, Scene& scene)
 	);
 }
 
-void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
+void Renderer::renderDeferredScene(CommandBuffer& commandBuffer, Scene& scene)
 {
 	// Dynamic viewport
 	float swapchainHeight = (float)this->swapchain.getHeight();
@@ -427,8 +428,44 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 	// Render to HDR buffer
 	
 	// Transition layouts for color and depth
-	std::array<VkImageMemoryBarrier2, 2> memoryBarriers =
+	std::array<VkImageMemoryBarrier2, 5> memoryBarriers =
 	{
+		// Position
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_NONE,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			this->swapchain.getDeferredPositionTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		),
+
+		// Normal
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_NONE,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			this->swapchain.getDeferredNormalTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		),
+
+		// BRDF index
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_NONE,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			this->swapchain.getDeferredBrdfTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		),
+
 		// HDR
 		PipelineBarrier::imageMemoryBarrier2(
 			VK_ACCESS_NONE,
@@ -456,17 +493,34 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 	commandBuffer.memoryBarrier(memoryBarriers.data(), uint32_t(memoryBarriers.size()));
 
 	// Clear values for color and depth
-	std::array<VkClearValue, 2> clearValues{};
+	std::array<VkClearValue, 4> clearValues{};
 	clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-	clearValues[1].depthStencil = { 1.0f, 0 };
+	clearValues[1].color = { { 64.0f, 64.0f, 64.0f, 1.0f } };
+	clearValues[2].color.uint32[0] = 0u; clearValues[2].color.uint32[1] = 0u; clearValues[2].color.uint32[2] = 0u; clearValues[2].color.uint32[3] = 0u;
+	clearValues[3].depthStencil = { 1.0f, 0 };
 
 	// Color attachment
-	VkRenderingAttachmentInfo colorAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
-	colorAttachment.imageView = this->swapchain.getHdrTexture().getVkImageView();
-	colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.clearValue = clearValues[0];
+	std::array<VkRenderingAttachmentInfo, 3> colorAttachments{};
+	colorAttachments[0].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+	colorAttachments[0].imageView = this->swapchain.getDeferredPositionTexture().getVkImageView();
+	colorAttachments[0].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachments[0].clearValue = clearValues[0];
+
+	colorAttachments[1].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+	colorAttachments[1].imageView = this->swapchain.getDeferredNormalTexture().getVkImageView();
+	colorAttachments[1].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachments[1].clearValue = clearValues[1];
+
+	colorAttachments[2].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+	colorAttachments[2].imageView = this->swapchain.getDeferredBrdfTexture().getVkImageView();
+	colorAttachments[2].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachments[2].clearValue = clearValues[2];
 
 	// Depth attachment
 	VkRenderingAttachmentInfo depthAttachment{ VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO };
@@ -480,8 +534,8 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 	VkRenderingInfo renderingInfo{ VK_STRUCTURE_TYPE_RENDERING_INFO };
 	renderingInfo.renderArea = { { 0, 0 }, this->swapchain.getVkExtent() };
 	renderingInfo.layerCount = 1;
-	renderingInfo.colorAttachmentCount = 1;
-	renderingInfo.pColorAttachments = &colorAttachment;
+	renderingInfo.colorAttachmentCount = uint32_t(colorAttachments.size());
+	renderingInfo.pColorAttachments = colorAttachments.data();
 	renderingInfo.pDepthAttachment = &depthAttachment;
 	commandBuffer.beginRendering(renderingInfo);
 
@@ -497,7 +551,11 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 		uboInfo.range = this->uniformBuffer.getBufferSize();
 
 		// Binding 1
-		VkDescriptorBufferInfo lightCamUboInfo{};
+		VkDescriptorImageInfo albedoImageInfo{};
+		albedoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		// Binding 1
+		/*VkDescriptorBufferInfo lightCamUboInfo{};
 		lightCamUboInfo.buffer = this->rsm.getLightCamUbo().getVkBuffer(GfxState::getFrameIndex());
 		lightCamUboInfo.range = this->rsm.getLightCamUbo().getBufferSize();
 
@@ -573,6 +631,13 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 			DescriptorSet::writeImage(8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmBRDFImageInfo),
 
 			DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
+		};*/
+
+		std::array<VkWriteDescriptorSet, 2> writeDescriptorSets
+		{
+			DescriptorSet::writeBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &uboInfo),
+
+			DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr)
 		};
 
 		// Loop through entities with mesh components
@@ -593,14 +658,14 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 					numPipelineSwitches++;
 				}
 
-				// Binding 9
+				// Binding 1
 				const Texture* albedoTexture =
 					this->resourceManager->getTexture(material.albedoTextureId);
 				albedoImageInfo.imageView = albedoTexture->getVkImageView();
 				albedoImageInfo.sampler = albedoTexture->getVkSampler();
 
 				// Push descriptor set update
-				writeDescriptorSets[9].pImageInfo = &albedoImageInfo;
+				writeDescriptorSets[1].pImageInfo = &albedoImageInfo;
 				commandBuffer.pushDescriptorSet(
 					this->gfxResManager.getGraphicsPipelineLayout(),
 					0,
@@ -621,6 +686,120 @@ void Renderer::renderScene(CommandBuffer& commandBuffer, Scene& scene)
 
 	// End rendering
 	commandBuffer.endRendering();
+}
+
+void Renderer::computeDeferredLight(CommandBuffer& commandBuffer)
+{
+	// Transition HDR and swapchain image
+	std::array<VkImageMemoryBarrier2, 4> deferredLightMemoryBarriers =
+	{
+		// Position
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
+			this->swapchain.getDeferredPositionTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		),
+
+		// Normal
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
+			this->swapchain.getDeferredNormalTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		),
+
+		// BRDF index
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
+			this->swapchain.getDeferredBrdfTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		),
+
+		// Swapchain image
+		PipelineBarrier::imageMemoryBarrier2(
+			VK_ACCESS_NONE,
+			VK_ACCESS_SHADER_WRITE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_GENERAL,
+			this->swapchain.getHdrTexture().getVkImage(),
+			VK_IMAGE_ASPECT_COLOR_BIT
+		)
+	};
+	commandBuffer.memoryBarrier(deferredLightMemoryBarriers.data(), uint32_t(deferredLightMemoryBarriers.size()));
+
+	// Compute pipeline
+	commandBuffer.bindPipeline(this->deferredLightPipeline);
+
+	// Binding 0
+	VkDescriptorImageInfo inputPositionImageInfo{};
+	inputPositionImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	inputPositionImageInfo.imageView = this->swapchain.getDeferredPositionTexture().getVkImageView();
+
+	// Binding 1
+	VkDescriptorImageInfo inputNormalImageInfo{};
+	inputNormalImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	inputNormalImageInfo.imageView = this->swapchain.getDeferredNormalTexture().getVkImageView();
+
+	// Binding 2
+	VkDescriptorImageInfo inputBrdfImageInfo{};
+	inputBrdfImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	inputBrdfImageInfo.imageView = this->swapchain.getDeferredBrdfTexture().getVkImageView();
+
+	// Binding 3
+	VkDescriptorImageInfo outputImageInfo{};
+	outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	outputImageInfo.imageView = this->swapchain.getHdrTexture().getVkImageView();
+
+	// Descriptor set
+	std::array<VkWriteDescriptorSet, 4> computeWriteDescriptorSets
+	{
+		DescriptorSet::writeImage(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &inputPositionImageInfo),
+		DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &inputNormalImageInfo),
+		DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &inputBrdfImageInfo),
+		DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &outputImageInfo)
+	};
+	commandBuffer.pushDescriptorSet(
+		this->deferredLightPipelineLayout,
+		0,
+		uint32_t(computeWriteDescriptorSets.size()),
+		computeWriteDescriptorSets.data()
+	);
+
+	// Push constant
+	PostProcessPCD deferredLightData{};
+	deferredLightData.resolution =
+		glm::uvec4(
+			this->swapchain.getVkExtent().width,
+			this->swapchain.getVkExtent().height,
+			0u,
+			0u
+		);
+	commandBuffer.pushConstant(
+		this->deferredLightPipelineLayout,
+		(void*)&deferredLightData
+	);
+
+	// Run compute shader
+	commandBuffer.dispatch(
+		(deferredLightData.resolution.x + 16 - 1) / 16,
+		(deferredLightData.resolution.y + 16 - 1) / 16
+	);
 }
 
 void Renderer::renderImgui(CommandBuffer& commandBuffer, ImDrawData* imguiDrawData)
@@ -662,11 +841,11 @@ void Renderer::computePostProcess(CommandBuffer& commandBuffer, uint32_t imageIn
 	{
 		// HDR
 		PipelineBarrier::imageMemoryBarrier2(
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_WRITE_BIT,
 			VK_ACCESS_SHADER_READ_BIT,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_IMAGE_LAYOUT_GENERAL,
 			VK_IMAGE_LAYOUT_GENERAL,
 			this->swapchain.getHdrTexture().getVkImage(),
 			VK_IMAGE_ASPECT_COLOR_BIT

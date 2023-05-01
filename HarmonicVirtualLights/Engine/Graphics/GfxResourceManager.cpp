@@ -18,6 +18,17 @@ void GfxResourceManager::init(const GfxAllocContext& gfxAllocContext)
 		*this->gfxAllocContext->device,
 		{
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT },				// Cam UBO
+
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT }		// Albedo
+		},
+		VK_SHADER_STAGE_VERTEX_BIT,
+		sizeof(PCD)
+	);
+
+	/*this->graphicsPipelineLayout.createPipelineLayout(
+		*this->gfxAllocContext->device,
+		{
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT },				// Cam UBO
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT },			// Light cam UBO
 
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT },	// BRDF LUT
@@ -36,7 +47,7 @@ void GfxResourceManager::init(const GfxAllocContext& gfxAllocContext)
 		},
 		VK_SHADER_STAGE_VERTEX_BIT,
 		sizeof(PCD)
-	);
+	);*/
 }
 
 void GfxResourceManager::cleanup()
@@ -131,7 +142,11 @@ uint32_t GfxResourceManager::getMaterialPipelineIndex(const Material& material)
 	newPipeline.createGraphicsPipeline(
 		*this->gfxAllocContext->device, 
 		this->graphicsPipelineLayout,
-		{ Swapchain::HDR_FORMAT },
+		{ 
+			Swapchain::DEFERRED_POSITION_FORMAT,
+			Swapchain::DEFERRED_NORMAL_FORMAT,
+			Swapchain::DEFERRED_BRDF_INDEX_FORMAT
+		},
 		Texture::getDepthBufferFormat(),
 		"Resources/Shaders/" + std::string(material.vertexShader),
 		"Resources/Shaders/" + std::string(material.fragmentShader)

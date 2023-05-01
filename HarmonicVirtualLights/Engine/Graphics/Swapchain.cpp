@@ -204,6 +204,34 @@ void Swapchain::createSwapchain(
 
 void Swapchain::createFramebuffers()
 {
+	// Deferred outputs
+	SamplerSettings samplerSettings{};
+	samplerSettings.filter = VK_FILTER_NEAREST;
+	this->deferredPositionTexture.createAsRenderableSampledTexture(
+		*this->gfxAllocContext,
+		this->getWidth(),
+		this->getHeight(),
+		Swapchain::DEFERRED_POSITION_FORMAT,
+		VK_IMAGE_USAGE_STORAGE_BIT,
+		samplerSettings
+	);
+	this->deferredNormalTexture.createAsRenderableSampledTexture(
+		*this->gfxAllocContext,
+		this->getWidth(),
+		this->getHeight(),
+		Swapchain::DEFERRED_NORMAL_FORMAT,
+		VK_IMAGE_USAGE_STORAGE_BIT,
+		samplerSettings
+	);
+	this->deferredBrdfIndexTexture.createAsRenderableSampledTexture(
+		*this->gfxAllocContext,
+		this->getWidth(),
+		this->getHeight(),
+		Swapchain::DEFERRED_BRDF_INDEX_FORMAT,
+		VK_IMAGE_USAGE_STORAGE_BIT,
+		samplerSettings
+	);
+
 	// Create HDR/depth textures
 	this->hdrTexture.createAsRenderableTexture(
 		*this->gfxAllocContext,
@@ -257,6 +285,9 @@ void Swapchain::cleanup()
 
 void Swapchain::cleanupFramebuffers()
 {
+	this->deferredPositionTexture.cleanup();
+	this->deferredNormalTexture.cleanup();
+	this->deferredBrdfIndexTexture.cleanup();
 	this->hdrTexture.cleanup();
 	this->depthTexture.cleanup();
 }

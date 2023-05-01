@@ -14,6 +14,8 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Fix direct + indirect contribution relation
 * Remove unused assets
 * Consider removing spotlight cutoff, since HVLs are distributed in a square
+* Use readonly modifier in shader
+* Enable/disable imgui
 
 # Vulkan features used
 * Version 1.3

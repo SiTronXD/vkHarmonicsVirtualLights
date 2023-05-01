@@ -56,10 +56,13 @@ private:
 	float elapsedFrames;
 	float avgRsmMs;
 	float avgSmMs;
-	float avgSceneMs;
+	float avgDeferredGeomMs;
+	float avgDeferredLightMs;
 #endif
 
 	// Compute
+	PipelineLayout deferredLightPipelineLayout;
+	Pipeline deferredLightPipeline;
 	PipelineLayout postProcessPipelineLayout;
 	Pipeline postProcessPipeline;
 
@@ -120,7 +123,8 @@ private:
 		PCD& pushConstantData);
 	void renderRSM(CommandBuffer& commandBuffer, Scene& scene);
 	void renderShadowMap(CommandBuffer& commandBuffer, Scene& scene);
-	void renderScene(CommandBuffer& commandBuffer, Scene& scene);
+	void renderDeferredScene(CommandBuffer& commandBuffer, Scene& scene);
+	void computeDeferredLight(CommandBuffer& commandBuffer);
 	void renderImgui(CommandBuffer& commandBuffer, ImDrawData* imguiDrawData);
 	void computePostProcess(CommandBuffer& commandBuffer, uint32_t imageIndex);
 
