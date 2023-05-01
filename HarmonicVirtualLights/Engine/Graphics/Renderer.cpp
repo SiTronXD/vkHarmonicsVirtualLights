@@ -93,9 +93,9 @@ void Renderer::initVulkan()
 			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT },
 
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_COMPUTE_BIT },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_COMPUTE_BIT },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_COMPUTE_BIT },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_COMPUTE_BIT }
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT }
 		},
 		VK_SHADER_STAGE_COMPUTE_BIT,
 		sizeof(DeferredLightPCD)
@@ -710,7 +710,7 @@ void Renderer::initForScene(Scene& scene)
 			// Pipelines for materials
 			material.rsmPipelineIndex = this->gfxResManager.getMaterialRsmPipelineIndex(material);
 			material.shadowMapPipelineIndex = this->gfxResManager.getMaterialShadowMapPipelineIndex(material);
-			material.pipelineIndex = this->gfxResManager.getMaterialPipelineIndex(material);
+			material.deferredGeomPipelineIndex = this->gfxResManager.getMaterialPipelineIndex(material);
 		}
 	);
 
@@ -718,7 +718,7 @@ void Renderer::initForScene(Scene& scene)
 	scene.getRegistry().sort<Material>(
 		[](const auto& lhs, const auto& rhs)
 		{
-			return lhs.pipelineIndex < rhs.pipelineIndex;
+			return lhs.deferredGeomPipelineIndex < rhs.deferredGeomPipelineIndex;
 		}
 	);
 }

@@ -11,34 +11,28 @@ RSM::RSM()
 
 void RSM::init(const GfxAllocContext& gfxAllocContext)
 {
-	SamplerSettings samplerSettings{};
-	samplerSettings.filter = VK_FILTER_NEAREST;
-
-	this->positionTexture.createAsRenderableSampledTexture(
+	this->positionTexture.createAsRenderableTexture(
 		gfxAllocContext, 
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE,
 		RSM::POSITION_FORMAT,
-		(VkImageUsageFlagBits) 0,
-		samplerSettings
+		VK_IMAGE_USAGE_STORAGE_BIT
 	);
-	this->normalTexture.createAsRenderableSampledTexture(
+	this->normalTexture.createAsRenderableTexture(
 		gfxAllocContext,
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE,
 		RSM::NORMAL_FORMAT,
-		(VkImageUsageFlagBits)0,
-		samplerSettings
+		VK_IMAGE_USAGE_STORAGE_BIT
 	);
-	this->brdfIndexTexture.createAsRenderableSampledTexture(
+	this->brdfIndexTexture.createAsRenderableTexture(
 		gfxAllocContext,
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE,
 		RSM::BRDF_INDEX_FORMAT,
-		(VkImageUsageFlagBits)0,
-		samplerSettings
+		VK_IMAGE_USAGE_STORAGE_BIT
 	);
-	this->depthTexture.createAsDepthSampledTexture(
+	this->depthTexture.createAsDepthTexture(
 		gfxAllocContext,
 		RSM::TEX_SIZE,
 		RSM::TEX_SIZE

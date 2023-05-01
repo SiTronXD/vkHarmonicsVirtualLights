@@ -239,7 +239,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
 			this->rsm.getPositionTexture().getVkImage(),
 			VK_IMAGE_ASPECT_COLOR_BIT
 		),
@@ -251,7 +251,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
 			this->rsm.getNormalTexture().getVkImage(),
 			VK_IMAGE_ASPECT_COLOR_BIT
 		),
@@ -263,7 +263,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
 			this->rsm.getBrdfIndexTexture().getVkImage(),
 			VK_IMAGE_ASPECT_COLOR_BIT
 		)
@@ -569,13 +569,13 @@ void Renderer::renderDeferredScene(CommandBuffer& commandBuffer, Scene& scene)
 			const Transform& transform)
 			{
 				// Switch pipeline if necessary
-				if (currentPipelineIndex != material.pipelineIndex)
+				if (currentPipelineIndex != material.deferredGeomPipelineIndex)
 				{
 					commandBuffer.bindPipeline(
-						this->gfxResManager.getPipeline(material.pipelineIndex)
+						this->gfxResManager.getPipeline(material.deferredGeomPipelineIndex)
 					);
 
-					currentPipelineIndex = material.pipelineIndex;
+					currentPipelineIndex = material.deferredGeomPipelineIndex;
 					numPipelineSwitches++;
 				}
 
@@ -707,23 +707,20 @@ void Renderer::computeDeferredLight(CommandBuffer& commandBuffer, const glm::vec
 	// Binding 7
 	const Texture& rsmPositionTex = this->rsm.getPositionTexture();
 	VkDescriptorImageInfo rsmPositionImageInfo{};
-	rsmPositionImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmPositionImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	rsmPositionImageInfo.imageView = rsmPositionTex.getVkImageView();
-	rsmPositionImageInfo.sampler = rsmPositionTex.getVkSampler();
 
 	// Binding 8
 	const Texture& rsmNormalTex = this->rsm.getNormalTexture();
 	VkDescriptorImageInfo rsmNormalImageInfo{};
-	rsmNormalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmNormalImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	rsmNormalImageInfo.imageView = rsmNormalTex.getVkImageView();
-	rsmNormalImageInfo.sampler = rsmNormalTex.getVkSampler();
 
 	// Binding 9
 	const Texture& rsmBRDFTex = this->rsm.getBrdfIndexTexture();
 	VkDescriptorImageInfo rsmBRDFImageInfo{};
-	rsmBRDFImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmBRDFImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	rsmBRDFImageInfo.imageView = rsmBRDFTex.getVkImageView();
-	rsmBRDFImageInfo.sampler = rsmBRDFTex.getVkSampler();
 
 	// Descriptor set
 	std::array<VkWriteDescriptorSet, 10> computeWriteDescriptorSets
@@ -737,9 +734,9 @@ void Renderer::computeDeferredLight(CommandBuffer& commandBuffer, const glm::vec
 		DescriptorSet::writeBuffer(5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &shCoeffSboInfo),
 
 		DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
-		DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmPositionImageInfo),
-		DescriptorSet::writeImage(8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmNormalImageInfo),
-		DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmBRDFImageInfo)
+		DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &rsmPositionImageInfo),
+		DescriptorSet::writeImage(8, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &rsmNormalImageInfo),
+		DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &rsmBRDFImageInfo)
 	};
 	commandBuffer.pushDescriptorSet(
 		this->deferredLightPipelineLayout,

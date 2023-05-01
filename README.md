@@ -5,7 +5,6 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Ethics in report
 * Double check clamping range for half angle
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
-* Use storage images instead of sampled images
 * Use sinc window to try and avoid ringing artefacts
 * "vkHarmonicsVirtualLights"*
 * Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
@@ -14,7 +13,6 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Fix direct + indirect contribution relation
 * Remove unused assets
 * Consider removing spotlight cutoff, since HVLs are distributed in a square
-* Use readonly modifier in shader
 * Enable/disable imgui
 
 # Vulkan features used

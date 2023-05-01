@@ -29,9 +29,9 @@ layout(binding = 5) readonly buffer SHCoefficientsBuffer
 } shCoefficients;
 
 layout(binding = 6) uniform sampler2D shadowMapTex;
-layout(binding = 7) uniform sampler2D rsmPositionTex;
-layout(binding = 8) uniform sampler2D rsmNormalTex;
-layout(binding = 9) uniform usampler2D rsmBRDFIndexTex;
+layout(binding = 7, rgba32f) uniform readonly image2D rsmPositionTex;
+layout(binding = 8, rgba32f) uniform readonly image2D rsmNormalTex;
+layout(binding = 9, r8ui) uniform readonly uimage2D rsmBRDFIndexTex;
 
 int factorial(int v)
 {
@@ -241,8 +241,10 @@ vec3 getIndirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, u
 	{
 		for(uint x = 0; x < rsmSize; ++x)
 		{
-			vec2 uv = (vec2(float(x), float(y)) + vec2(0.5f)) / fRsmSize;
-            vec3 hvlNormal = texture(rsmNormalTex, uv).rgb;
+			//vec2 uv = (vec2(float(x), float(y)) + vec2(0.5f)) / fRsmSize;
+            //vec3 hvlNormal = texture(rsmNormalTex, uv).rgb;
+            ivec2 uvIndex = ivec2(int(x), int(y));
+            vec3 hvlNormal = imageLoad(rsmNormalTex, uvIndex).rgb;
 
             // This texel does not contain a valid HVL
             if(hvlNormal.x > 32.0f)
@@ -251,8 +253,10 @@ vec3 getIndirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, u
             }
 
             // HVL cache
-            vec3 hvlPos = texture(rsmPositionTex, uv).rgb;
-            uint yBrdfIndex = texture(rsmBRDFIndexTex, uv).r;
+            /*vec3 hvlPos = texture(rsmPositionTex, uv).rgb;
+            uint yBrdfIndex = texture(rsmBRDFIndexTex, uv).r;*/
+            vec3 hvlPos = imageLoad(rsmPositionTex, uvIndex).rgb;
+            uint yBrdfIndex = imageLoad(rsmBRDFIndexTex, uvIndex).r;
 
             // HVL data
             vec3 wLight = hvlPos - worldPos;

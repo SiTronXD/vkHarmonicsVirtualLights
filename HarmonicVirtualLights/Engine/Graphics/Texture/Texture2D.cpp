@@ -203,6 +203,15 @@ bool Texture2D::createAsRenderableTexture(
 	this->gfxAllocContext = &gfxAllocContext;
 	this->format = format;
 
+	// Check format support
+	if (!GpuProperties::isFormatSupported(
+		format,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT))
+	{
+		Log::error("Format with index " + std::to_string(format) + " is not supported.");
+	}
+
 	// Create color image
 	this->createImage(
 		width,
@@ -239,7 +248,7 @@ bool Texture2D::createAsRenderableSampledTexture(
 	if (!GpuProperties::isFormatSupported(
 		format, 
 		VK_IMAGE_TILING_OPTIMAL, 
-		VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+		VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
 	{
 		Log::error("Format with index " + std::to_string(format) + " is not supported.");
 	}

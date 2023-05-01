@@ -26,15 +26,13 @@ struct Material
 
 	uint32_t rsmPipelineIndex = ~0u;
 	uint32_t shadowMapPipelineIndex = ~0u;
-	uint32_t pipelineIndex = ~0u;
+	uint32_t deferredGeomPipelineIndex = ~0u;
 
 	Material()
 	{
 		// Default shaders
 		std::strcpy(this->vertexShader, "DeferredGeom.vert.spv");
 		std::strcpy(this->fragmentShader, "DeferredGeom.frag.spv");
-		/*std::strcpy(this->vertexShader, "Pbr.vert.spv");
-		std::strcpy(this->fragmentShader, "Pbr.frag.spv");*/
 	}
 
 	void matToStr(std::string& output) const
