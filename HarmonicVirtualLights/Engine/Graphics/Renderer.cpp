@@ -687,8 +687,8 @@ void Renderer::initForScene(Scene& scene)
 	{
 		// Material
 		Material skyboxMaterial{};
-		std::strcpy(skyboxMaterial.vertexShader, "Skybox.vert.spv");
-		std::strcpy(skyboxMaterial.fragmentShader, "Skybox.frag.spv");
+		std::strcpy(skyboxMaterial.vertexShader, "DeferredGeomSkybox.vert.spv");
+		std::strcpy(skyboxMaterial.fragmentShader, "DeferredGeomSkybox.frag.spv");
 		skyboxMaterial.albedoTextureId = this->skyboxTextureIndex;
 		skyboxMaterial.castShadows = false;
 
