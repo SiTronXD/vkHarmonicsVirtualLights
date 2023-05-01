@@ -237,7 +237,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_SHADER_READ_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			this->rsm.getPositionTexture().getVkImage(),
@@ -249,7 +249,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_SHADER_READ_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			this->rsm.getNormalTexture().getVkImage(),
@@ -261,7 +261,7 @@ void Renderer::renderRSM(CommandBuffer& commandBuffer, Scene& scene)
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_SHADER_READ_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			this->rsm.getBrdfIndexTexture().getVkImage(),
@@ -395,7 +395,7 @@ void Renderer::renderShadowMap(CommandBuffer& commandBuffer, Scene& scene)
 		VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		VK_ACCESS_SHADER_READ_BIT,
 		VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		this->rsm.getHighResShadowMapTexture().getVkImage(),
@@ -688,7 +688,7 @@ void Renderer::renderDeferredScene(CommandBuffer& commandBuffer, Scene& scene)
 	commandBuffer.endRendering();
 }
 
-void Renderer::computeDeferredLight(CommandBuffer& commandBuffer)
+void Renderer::computeDeferredLight(CommandBuffer& commandBuffer, const glm::vec3& camPos)
 {
 	// Transition HDR and swapchain image
 	std::array<VkImageMemoryBarrier2, 4> deferredLightMemoryBarriers =
@@ -766,13 +766,59 @@ void Renderer::computeDeferredLight(CommandBuffer& commandBuffer)
 	outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	outputImageInfo.imageView = this->swapchain.getHdrTexture().getVkImageView();
 
+	// Binding 4
+	VkDescriptorBufferInfo lightCamUboInfo{};
+	lightCamUboInfo.buffer = this->rsm.getLightCamUbo().getVkBuffer(GfxState::getFrameIndex());
+	lightCamUboInfo.range = this->rsm.getLightCamUbo().getBufferSize();
+
+	// Binding 5
+	VkDescriptorBufferInfo shCoeffSboInfo{};
+	shCoeffSboInfo.buffer = this->shCoefficientBuffer.getVkBuffer();
+	shCoeffSboInfo.range = this->shCoefficientBuffer.getBufferSize();
+
+	// Binding 6
+	const Texture& rsmDepthTex = this->rsm.getHighResShadowMapTexture();
+	VkDescriptorImageInfo rsmDepthImageInfo{};
+	rsmDepthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmDepthImageInfo.imageView = rsmDepthTex.getVkImageView();
+	rsmDepthImageInfo.sampler = rsmDepthTex.getVkSampler();
+
+	// Binding 7
+	const Texture& rsmPositionTex = this->rsm.getPositionTexture();
+	VkDescriptorImageInfo rsmPositionImageInfo{};
+	rsmPositionImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmPositionImageInfo.imageView = rsmPositionTex.getVkImageView();
+	rsmPositionImageInfo.sampler = rsmPositionTex.getVkSampler();
+
+	// Binding 8
+	const Texture& rsmNormalTex = this->rsm.getNormalTexture();
+	VkDescriptorImageInfo rsmNormalImageInfo{};
+	rsmNormalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmNormalImageInfo.imageView = rsmNormalTex.getVkImageView();
+	rsmNormalImageInfo.sampler = rsmNormalTex.getVkSampler();
+
+	// Binding 9
+	const Texture& rsmBRDFTex = this->rsm.getBrdfIndexTexture();
+	VkDescriptorImageInfo rsmBRDFImageInfo{};
+	rsmBRDFImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	rsmBRDFImageInfo.imageView = rsmBRDFTex.getVkImageView();
+	rsmBRDFImageInfo.sampler = rsmBRDFTex.getVkSampler();
+
 	// Descriptor set
-	std::array<VkWriteDescriptorSet, 4> computeWriteDescriptorSets
+	std::array<VkWriteDescriptorSet, 10> computeWriteDescriptorSets
 	{
 		DescriptorSet::writeImage(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &inputPositionImageInfo),
 		DescriptorSet::writeImage(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &inputNormalImageInfo),
 		DescriptorSet::writeImage(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &inputBrdfImageInfo),
-		DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &outputImageInfo)
+		DescriptorSet::writeImage(3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, &outputImageInfo),
+
+		DescriptorSet::writeBuffer(4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightCamUboInfo),
+		DescriptorSet::writeBuffer(5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &shCoeffSboInfo),
+
+		DescriptorSet::writeImage(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmDepthImageInfo),
+		DescriptorSet::writeImage(7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmPositionImageInfo),
+		DescriptorSet::writeImage(8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmNormalImageInfo),
+		DescriptorSet::writeImage(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &rsmBRDFImageInfo)
 	};
 	commandBuffer.pushDescriptorSet(
 		this->deferredLightPipelineLayout,
@@ -782,7 +828,7 @@ void Renderer::computeDeferredLight(CommandBuffer& commandBuffer)
 	);
 
 	// Push constant
-	PostProcessPCD deferredLightData{};
+	DeferredLightPCD deferredLightData{};
 	deferredLightData.resolution =
 		glm::uvec4(
 			this->swapchain.getVkExtent().width,
@@ -790,6 +836,7 @@ void Renderer::computeDeferredLight(CommandBuffer& commandBuffer)
 			0u,
 			0u
 		);
+	deferredLightData.camPos = glm::vec4(camPos, 0.0f);
 	commandBuffer.pushConstant(
 		this->deferredLightPipelineLayout,
 		(void*)&deferredLightData

@@ -23,15 +23,15 @@ struct SHData
 {
 	float coeffs[((NUM_SHADER_SH_COEFFS + 3) / 4) * 4];
 };
-layout(binding = 4) readonly buffer SHCoefficientsBuffer
+layout(binding = 5) readonly buffer SHCoefficientsBuffer
 {
 	SHData coefficientSets[];
 } shCoefficients;
 
-layout(binding = 5) uniform sampler2D shadowMapTex;
-layout(binding = 6) uniform sampler2D rsmPositionTex;
-layout(binding = 7) uniform sampler2D rsmNormalTex;
-layout(binding = 8) uniform usampler2D rsmBRDFIndexTex;
+layout(binding = 6) uniform sampler2D shadowMapTex;
+layout(binding = 7) uniform sampler2D rsmPositionTex;
+layout(binding = 8) uniform sampler2D rsmNormalTex;
+layout(binding = 9) uniform usampler2D rsmBRDFIndexTex;
 
 int factorial(int v)
 {
@@ -219,7 +219,7 @@ float getFactorCoeffL(int l, float alpha)
     return factor * LHat;
 }
 
-vec3 getIndirectLight(vec2 texCoord, vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uint rsmSize, uint xBrdfIndex)
+vec3 getIndirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uint rsmSize, uint xBrdfIndex)
 {
 	vec3 color = vec3(0.0f);
 

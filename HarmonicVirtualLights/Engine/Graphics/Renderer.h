@@ -124,7 +124,7 @@ private:
 	void renderRSM(CommandBuffer& commandBuffer, Scene& scene);
 	void renderShadowMap(CommandBuffer& commandBuffer, Scene& scene);
 	void renderDeferredScene(CommandBuffer& commandBuffer, Scene& scene);
-	void computeDeferredLight(CommandBuffer& commandBuffer);
+	void computeDeferredLight(CommandBuffer& commandBuffer, const glm::vec3& camPos);
 	void renderImgui(CommandBuffer& commandBuffer, ImDrawData* imguiDrawData);
 	void computePostProcess(CommandBuffer& commandBuffer, uint32_t imageIndex);
 
