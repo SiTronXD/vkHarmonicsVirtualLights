@@ -109,8 +109,14 @@ void SponzaScene::init()
 	}
 
 	// Initial camera setup
-	this->camera.setPosition(glm::vec3(-1.0f, 0.5f, 1.0f));
-	this->camera.setRotation(SMath::PI * 1.0f, -SMath::PI * 0.1f);
+	this->camera.setPosition(glm::vec3(6.0f, 1.0f, -0.15f));
+	this->camera.setRotation(-SMath::PI * 0.5f, -SMath::PI * 0.0f);
+
+	// Initial light setup
+	this->getRenderer().setSpotlightOrientation(
+		glm::vec3(2.0f, 1.0f, 0.0f),
+		glm::vec3(0.0f)
+	);
 }
 
 void SponzaScene::update()
