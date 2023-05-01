@@ -226,6 +226,11 @@ void Renderer::cleanup()
 	this->instance.cleanup();
 }
 
+void Renderer::setSpotlightOrientation(const glm::vec3& position, const glm::vec3& forwardDir)
+{
+	this->rsm.setOrientation(position, forwardDir);
+}
+
 void Renderer::createCamUbo()
 {
 	this->uniformBuffer.createDynamicCpuBuffer(

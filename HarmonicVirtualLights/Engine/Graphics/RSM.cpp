@@ -55,18 +55,31 @@ void RSM::init(const GfxAllocContext& gfxAllocContext)
 		gfxAllocContext,
 		sizeof(LightCamUBO)
 	);
-	this->position = glm::vec3(1.0f, 1.0f, 1.0f);
-	this->forwardDir = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - this->position);
+
 	this->projectionMatrix = glm::perspective(
 		glm::radians(90.0f),
 		1.0f,
 		0.1f,
 		100.0f
 	);
+
+	// Orientation
+	this->setOrientation(
+		glm::vec3(-1.0f, 1.0f, 1.0f), 
+		glm::vec3(0.0f, 0.0f, 0.0f)
+	);
+}
+
+void RSM::setOrientation(const glm::vec3& position, const glm::vec3& lookAtPosition)
+{
+	const glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	this->position = position;
+	this->forwardDir = glm::normalize(lookAtPosition - this->position);
 	this->viewMatrix = glm::lookAt(
 		this->position,
 		this->position + this->forwardDir,
-		glm::vec3(0.0f, 1.0f, 0.0f)
+		std::abs(glm::dot(this->forwardDir, worldUp)) < 1.0f ? worldUp : glm::vec3(0.0f, 0.0f, 1.0f)
 	);
 }
 

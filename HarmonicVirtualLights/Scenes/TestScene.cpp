@@ -81,6 +81,12 @@ void TestScene::init()
 	this->camera.setRotation(SMath::PI * 1.0f, -SMath::PI * 0.1f);
 	/*this->camera.setPosition(glm::vec3(2.0f, 2.0f, 2.0f));
 	this->camera.setRotation(SMath::PI * 1.25f, -SMath::PI * 0.25f);*/
+
+	// Initial light setup
+	this->getRenderer().setSpotlightOrientation(
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f)
+	);
 }
 
 void TestScene::update()

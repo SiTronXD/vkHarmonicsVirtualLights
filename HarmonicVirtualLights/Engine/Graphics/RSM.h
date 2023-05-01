@@ -31,6 +31,7 @@ public:
 	RSM();
 
 	void init(const GfxAllocContext& gfxAllocContext);
+	void setOrientation(const glm::vec3& position, const glm::vec3& forwardDir);
 	void update();
 	void cleanup();
 

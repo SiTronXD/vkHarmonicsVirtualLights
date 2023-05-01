@@ -136,6 +136,8 @@ public:
 	void initForScene(Scene& scene);
 	void setWindow(Window& window);
 
+	void setSpotlightOrientation(const glm::vec3& position, const glm::vec3& lookAtPosition);
+
 	void startCleanup();
 	void cleanup();
 
