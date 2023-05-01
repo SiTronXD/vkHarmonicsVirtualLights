@@ -224,10 +224,10 @@ vec3 getIndirectLight(
     vec3 lightPos, 
     vec3 normal, 
     vec3 viewDir, 
-    uint rsmSize, 
-    uint xBrdfIndex/*,
+    int rsmSize, 
+    uint xBrdfIndex,
     int startHvlIndex,
-    int numHvls*/)
+    int numHvls)
 {
 	vec3 color = vec3(0.0f);
 
@@ -245,12 +245,10 @@ vec3 getIndirectLight(
     #endif
 
     // Loop through each HVL
-    int startHvlIndex = 0;
-    int numHvls = int(rsmSize*rsmSize);
     for(int i = startHvlIndex; i < startHvlIndex + numHvls; ++i)
 	{
-        int x = (i % int(rsmSize));
-        int y = i / int(rsmSize);
+        int x = (i % rsmSize);
+        int y = i / rsmSize;
 
 		//vec2 uv = (vec2(float(x), float(y)) + vec2(0.5f)) / fRsmSize;
         //vec3 hvlNormal = texture(rsmNormalTex, uv).rgb;
