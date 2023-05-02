@@ -181,7 +181,7 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
     // Obtain coefficient vector F (without cosine term)
     const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(jNormal, hvlToPrimaryLight, yBrdfIndex)];
     vec3 dotFY = vec3(0.0f);
-    for(int lSH = 0; lSH <= HVL_EMISSION_L; ++lSH)
+    /*for(int lSH = 0; lSH <= HVL_EMISSION_L; ++lSH)
     {
         for(int mSH = -lSH; mSH <= lSH; ++mSH)
         {
@@ -194,6 +194,16 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
                     FPrime.coeffs[index * 3 + 2]   // B
                 ) * shBasisFuncValues[index];
         }
+    }*/
+    const int HVL_EMISSION_NUM_COEFFS = (HVL_EMISSION_L + 1) * (HVL_EMISSION_L + 1);
+    for(int i = 0; i < HVL_EMISSION_NUM_COEFFS; ++i)
+    {
+        dotFY += 
+            vec3(
+                FPrime.coeffs[i * 3 + 0],  // R
+                FPrime.coeffs[i * 3 + 1],  // G
+                FPrime.coeffs[i * 3 + 2]   // B
+            ) * shBasisFuncValues[i];
     }
 
     return dotFY * capitalPhi * g;
@@ -243,6 +253,8 @@ vec3 getIndirectLight(
     #if (CONVOLUTION_L == 4)
         float shBasisFuncValues[25];
     #endif
+
+    float factorCoeffL[CONVOLUTION_L + 1];
 
     // Loop through each HVL
     for(int i = startHvlIndex; i < startHvlIndex + numHvls; ++i)
@@ -294,7 +306,7 @@ vec3 getIndirectLight(
         #endif
 
         // L * F
-        vec3 dotLF = vec3(0.0f);
+        /*vec3 dotLF = vec3(0.0f);
         for(int lSH = 0; lSH <= CONVOLUTION_L; ++lSH)
         {
             float factorCoeffL = getFactorCoeffL(lSH, alpha);
@@ -310,6 +322,31 @@ vec3 getIndirectLight(
                         F.coeffs[index * 3 + 1],    // G
                         F.coeffs[index * 3 + 2]     // B
                     );
+            }
+        }*/
+
+        vec3 dotLF = vec3(0.0f);
+        for(int lSH = 0; lSH <= CONVOLUTION_L; ++lSH)
+        {
+            factorCoeffL[lSH] = getFactorCoeffL(lSH, alpha);
+        }
+
+        int currL = 0;
+        const int CONVOLUTION_NUM_COEFFS = (CONVOLUTION_L + 1) * (CONVOLUTION_L + 1);
+        for(int i = 0; i < CONVOLUTION_NUM_COEFFS; ++i)
+        {
+            float Llm = factorCoeffL[currL] * shBasisFuncValues[i];
+
+            dotLF += 
+                Llm * vec3(
+                    F.coeffs[i * 3 + 0],    // R
+                    F.coeffs[i * 3 + 1],    // G
+                    F.coeffs[i * 3 + 2]     // B
+                );
+
+            if(i+1 >= (currL + 1) * (currL + 1))
+            {
+                currL++;
             }
         }
 
@@ -345,7 +382,7 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
     // Obtain coefficient vector F (with cosine term)
     // TODO: remove multiple SH set accesses across direct/indirect calculations
     const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
-    for(int lSH = 0; lSH <= DIRECT_CONVOLUTION_L; ++lSH)
+    /*for(int lSH = 0; lSH <= DIRECT_CONVOLUTION_L; ++lSH)
     {
         for(int mSH = -lSH; mSH <= lSH; ++mSH)
         {
@@ -358,6 +395,16 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
                     F.coeffs[index * 3 + 2]   // B
                 ) * shBasisFuncValues[index];
         }
+    }*/
+    const int DIRECT_CONVOLUTION_NUM_COEFFS = (DIRECT_CONVOLUTION_L + 1) * (DIRECT_CONVOLUTION_L + 1);
+    for(int i = 0; i < DIRECT_CONVOLUTION_NUM_COEFFS; ++i)
+    {
+        color += 
+            vec3(
+                F.coeffs[i * 3 + 0],  // R
+                F.coeffs[i * 3 + 1],  // G
+                F.coeffs[i * 3 + 2]   // B
+            ) * shBasisFuncValues[i];
     }
 
     // TODO: double check this
