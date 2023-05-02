@@ -5,11 +5,14 @@
 #include "../Common/Sh.glsl"
 #include "../Common/ColorTransformations.glsl"
 
+#define LOCAL_SIZE 16
+#define THREADS_PER_PIXEL 1
+
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
 #define SHADOW_BIAS 0.005f
 #define SHADOW_MAP_SIZE 256.0f
 
-layout (local_size_x = 16, local_size_y = 16) in;
+layout (local_size_x = LOCAL_SIZE, local_size_y = LOCAL_SIZE, local_size_z = THREADS_PER_PIXEL) in;
 
 layout (binding = 0, rgba32f) uniform readonly image2D deferredPosition;
 layout (binding = 1, rgba32f) uniform readonly image2D deferredNormal;
@@ -29,6 +32,8 @@ layout(push_constant) uniform PushConstantData
 	uvec4 resolution;
 	vec4 camPos;
 } pc;
+
+shared vec3 indirectLightColors[LOCAL_SIZE * LOCAL_SIZE * THREADS_PER_PIXEL];
 
 float getShadowFactor(vec3 fragWorldPos, vec3 toLightDir, vec3 toLightVec)
 {
@@ -66,6 +71,7 @@ float getShadowFactor(vec3 fragWorldPos, vec3 toLightDir, vec3 toLightVec)
 void main()
 {
 	uvec2 index = gl_GlobalInvocationID.xy;
+	uvec3 localIndex = gl_LocalInvocationID.xyz;
 
 	// Make sure compute work is within bounds
 	if(index.x >= pc.resolution.x || index.y >= pc.resolution.y)
@@ -78,27 +84,52 @@ void main()
 
 	// Color
 	vec3 color = vec3(0.0f);
-	if(worldNormal.w < 0.0f)
+	bool renderEnvironment = worldNormal.w >= 0.0f;
+	if(!renderEnvironment)
 	{
 		// Skybox color
 		color = worldNormal.rgb;
 	}
 	else
 	{
+		// Environment color
 		vec3 lightPos = lightCamUbo.pos.xyz;
 		vec3 toLightVec = lightPos - worldPos;
 		vec3 L = normalize(toLightVec);
 		vec3 V = normalize(pc.camPos.xyz - worldPos);
 
 		int rsmSize = int(lightCamUbo.pos.w + 0.5f);
-		int startHvlIndex = 0;
-		int numHvlsPerThread = rsmSize * rsmSize;
+		int numHvlsPerThread = rsmSize * rsmSize / THREADS_PER_PIXEL;
+		int startHvlIndex = numHvlsPerThread * int(localIndex.z);
 
-		// Environment color
-		color += getIndirectLight(worldPos, lightPos, worldNormal.xyz, V, rsmSize, xBrdfIndex, startHvlIndex, numHvlsPerThread);
-		color += getDirectLight(worldPos, lightPos, worldNormal.xyz, V, xBrdfIndex) * getShadowFactor(worldPos, L, toLightVec);
+		// Indirect
+		vec3 indirL = getIndirectLight(worldPos, lightPos, worldNormal.xyz, V, rsmSize, xBrdfIndex, startHvlIndex, numHvlsPerThread);
+		indirectLightColors[
+			localIndex.y * LOCAL_SIZE * THREADS_PER_PIXEL +
+			localIndex.x * THREADS_PER_PIXEL + 
+			localIndex.z] = indirL;
+		
+		//color += indirectColor;
+		if(localIndex.z == 0u)
+			color += getDirectLight(worldPos, lightPos, worldNormal.xyz, V, xBrdfIndex) * getShadowFactor(worldPos, L, toLightVec);
 	}
 	
+	barrier();
+
 	// Write color
-	imageStore(hdrImage, ivec2(index), vec4(color, 1.0f));
+	if(localIndex.z == 0u)
+	{
+		if(renderEnvironment)
+		{
+			for(int i = 0; i < THREADS_PER_PIXEL; ++i)
+			{
+				color += indirectLightColors[
+					localIndex.y * LOCAL_SIZE * THREADS_PER_PIXEL +
+					localIndex.x * THREADS_PER_PIXEL + 
+					i];
+			}
+		}
+
+		imageStore(hdrImage, ivec2(index), vec4(color, 1.0f));
+	}
 }

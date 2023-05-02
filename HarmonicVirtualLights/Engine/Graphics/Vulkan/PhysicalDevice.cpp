@@ -77,4 +77,5 @@ void PhysicalDevice::pickPhysicalDevice(
 	Log::write("maxPerStageDescriptorStorageBuffers: " + std::to_string(deviceLimits.maxPerStageDescriptorStorageBuffers));
 	Log::write("maxPerStageDescriptorStorageImages: " + std::to_string(deviceLimits.maxPerStageDescriptorStorageImages));
 	Log::write("maxPerStageDescriptorUniformBuffers: " + std::to_string(deviceLimits.maxPerStageDescriptorUniformBuffers));*/
+	Log::write("maxComputeSharedMemorySize: " + std::to_string(deviceLimits.maxComputeSharedMemorySize));
 }
