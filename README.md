@@ -22,9 +22,10 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Push descriptors
 
 # Assets used
+* MERL BRDF database: https://cdfg.csail.mit.edu/wojciech/brdfdatabase
+* Code for efficient SH evaluation: https://jcgt.org/published/0002/02/06/
 * HDR skybox (Grace Cathedral): https://www.pauldebevec.com/Probes/
 * Sponza model: https://github.com/jimmiebergmann/Sponza
-* MERL BRDF database: https://cdfg.csail.mit.edu/wojciech/brdfdatabase
 
 # Libraries and APIs used
 * Dear ImGUI: GUI for debugging
