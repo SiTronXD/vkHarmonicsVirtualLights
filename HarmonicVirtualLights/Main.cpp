@@ -3,6 +3,7 @@
 #include "Engine/Engine.h"
 #include "Scenes/TestScene.h"
 #include "Scenes/SponzaScene.h"
+#include "Scenes/DragonScene.h"
 
 int main()
 {
@@ -14,7 +15,7 @@ int main()
 	// Create engine within it's own scope
 	{
 		Engine engine;
-		engine.init(new SponzaScene());
+		engine.init(new DragonScene());
 	}
 
 	// Display validation errors right after exit

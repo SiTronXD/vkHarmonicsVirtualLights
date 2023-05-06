@@ -26,6 +26,7 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Code for efficient SH evaluation: https://jcgt.org/published/0002/02/06/
 * HDR skybox (Grace Cathedral): https://www.pauldebevec.com/Probes/
 * Sponza model: https://github.com/jimmiebergmann/Sponza
+* Dragon model: http://graphics.stanford.edu/data/3Dscanrep/
 
 # Libraries and APIs used
 * Dear ImGUI: GUI for debugging
