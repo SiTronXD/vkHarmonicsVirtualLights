@@ -325,6 +325,7 @@ vec3 getIndirectLight(
             }
         }*/
 
+        // Precalculate factors for L coefficient
         vec3 dotLF = vec3(0.0f);
         for(int lSH = 0; lSH <= CONVOLUTION_L; ++lSH)
         {
@@ -335,19 +336,20 @@ vec3 getIndirectLight(
         const int CONVOLUTION_NUM_COEFFS = (CONVOLUTION_L + 1) * (CONVOLUTION_L + 1);
         for(int i = 0; i < CONVOLUTION_NUM_COEFFS; ++i)
         {
-            float Llm = factorCoeffL[currL] * shBasisFuncValues[i];
+            // Next l
+            if(i >= (currL + 1) * (currL + 1))
+            {
+                currL++;
+            }
 
+            // Dot
+            float Llm = factorCoeffL[currL] * shBasisFuncValues[i];
             dotLF += 
                 Llm * vec3(
                     F.coeffs[i * 3 + 0],    // R
                     F.coeffs[i * 3 + 1],    // G
                     F.coeffs[i * 3 + 2]     // B
                 );
-
-            if(i+1 >= (currL + 1) * (currL + 1))
-            {
-                currL++;
-            }
         }
 
         // Add "Lj(L * F)" from each HVL
