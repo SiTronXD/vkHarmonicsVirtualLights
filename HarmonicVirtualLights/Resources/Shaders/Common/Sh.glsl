@@ -361,15 +361,15 @@ vec3 getIndirectLight(
             vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex);
             color += Lj * dotLF;
 
+            // Visualize HVL sizes
+            //color += hvlDistance <= hvlRadius ? vec3(0.1f, 0.0f, 0.0f) : vec3(0.0f);
+
             x++;
             if(x >= rsmSize)
             {
                 x = 0;
                 y++;
             }
-
-            // Visualize HVL sizes
-            //color += hvlDistance <= hvlRadius ? vec3(0.1f, 0.0f, 0.0f) : vec3(0.0f);
 	    }
     }
 
