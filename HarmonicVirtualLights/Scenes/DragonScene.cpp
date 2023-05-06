@@ -115,8 +115,8 @@ void DragonScene::init()
 	}
 
 	// Initial camera setup
-	this->camera.setPosition(glm::vec3(-0.5f, 0.7f, -0.15f));
-	this->camera.setRotation(-SMath::PI * 1.5f, -SMath::PI * 0.0f);
+	this->camera.setPosition(glm::vec3(-0.5f, 0.76f, -0.15f));
+	this->camera.setRotation(-SMath::PI * 1.5f, -SMath::PI * 0.05f);
 
 	// Initial light setup
 	this->getRenderer().setSpotlightOrientation(
