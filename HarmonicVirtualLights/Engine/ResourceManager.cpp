@@ -39,7 +39,10 @@ void ResourceManager::cleanup()
 	this->textures.shrink_to_fit();
 }
 
-uint32_t ResourceManager::addMesh(const std::string& filePath, Material& outputMeshMaterial)
+uint32_t ResourceManager::addMesh(
+	const std::string& filePath, 
+	Material& outputMeshMaterial,
+	bool calculateNormals)
 {
 	// Check if mesh has already been added
 	if (this->nameToMesh.count(filePath) != 0)
@@ -58,7 +61,7 @@ uint32_t ResourceManager::addMesh(const std::string& filePath, Material& outputM
 
 	// Load mesh data
 	MeshData meshData;
-	meshData.loadOBJ(filePath);
+	meshData.loadOBJ(filePath, calculateNormals);
 
 	// Create mesh from mesh data
 	createdMesh.createMesh(

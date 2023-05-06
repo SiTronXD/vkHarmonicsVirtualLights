@@ -64,7 +64,7 @@ void DragonScene::init()
 
 		MeshComponent& modelMesh = this->getComponent<MeshComponent>(dragonEntity);
 		modelMesh.meshId =
-			this->getResourceManager().addMesh("Resources/Models/dragon_vrip.obj", material);
+			this->getResourceManager().addMesh("Resources/Models/dragon_vrip.obj", material, false);
 	}
 
 	// Initial camera setup

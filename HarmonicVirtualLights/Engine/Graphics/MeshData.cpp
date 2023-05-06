@@ -22,7 +22,7 @@ void MeshData::create(std::vector<Vertex>& vertices, std::vector<uint32_t>& indi
 	this->indices.assign(indices.begin(), indices.end());
 }
 
-bool MeshData::loadOBJ(const std::string& filePath)
+bool MeshData::loadOBJ(const std::string& filePath, bool calculateNormals)
 {
 	// Load mesh
 	fastObjMesh* loadedObj = fast_obj_read(filePath.c_str());
@@ -63,11 +63,6 @@ bool MeshData::loadOBJ(const std::string& filePath)
 		// Load texcoords
 		v.texCoord.x = loadedObj->texcoords[loadedObj->indices[i].t * 2 + 0];
 		v.texCoord.y = loadedObj->texcoords[loadedObj->indices[i].t * 2 + 1];
-
-		// Load normals
-		/*v.normal.x = loadedObj->normals[loadedObj->indices[i].n * 3 + 0];
-		v.normal.y = loadedObj->normals[loadedObj->indices[i].n * 3 + 1];
-		v.normal.z = loadedObj->normals[loadedObj->indices[i].n * 3 + 2];*/
 	}
 
 	// Submeshes
@@ -80,22 +75,36 @@ bool MeshData::loadOBJ(const std::string& filePath)
 		this->submeshes[i].numIndices = currentObject.face_count * 3;
 	}
 
-	// Normals
-	for (size_t i = 0; i < this->indices.size(); i += 3)
+	if (!calculateNormals)
 	{
-		Vertex& v0 = this->vertices[this->indices[i + 0]];
-		Vertex& v1 = this->vertices[this->indices[i + 1]];
-		Vertex& v2 = this->vertices[this->indices[i + 2]];
+		// Load normals
+		for (unsigned int i = 0; i < loadedObj->index_count; ++i)
+		{
+			Vertex& v = this->vertices[this->indices[i]];
+			v.normal.x = loadedObj->normals[loadedObj->indices[i].n * 3 + 0];
+			v.normal.y = loadedObj->normals[loadedObj->indices[i].n * 3 + 1];
+			v.normal.z = loadedObj->normals[loadedObj->indices[i].n * 3 + 2];
+		}
+	}
+	else
+	{
+		// Calculate normals from triangles
+		for (size_t i = 0; i < this->indices.size(); i += 3)
+		{
+			Vertex& v0 = this->vertices[this->indices[i + 0]];
+			Vertex& v1 = this->vertices[this->indices[i + 1]];
+			Vertex& v2 = this->vertices[this->indices[i + 2]];
 
-		const glm::vec3 edge0 = v1.pos - v0.pos;
-		const glm::vec3 edge1 = v2.pos - v0.pos;
+			const glm::vec3 edge0 = v1.pos - v0.pos;
+			const glm::vec3 edge1 = v2.pos - v0.pos;
 
-		glm::vec3 normal = glm::cross(edge0, edge1);
-		normal = glm::normalize(normal);
+			glm::vec3 normal = glm::cross(edge0, edge1);
+			normal = glm::normalize(normal);
 
-		v0.normal += normal;
-		v1.normal += normal;
-		v2.normal += normal;
+			v0.normal += normal;
+			v1.normal += normal;
+			v2.normal += normal;
+		}
 	}
 
 	// Normalize smooth normals

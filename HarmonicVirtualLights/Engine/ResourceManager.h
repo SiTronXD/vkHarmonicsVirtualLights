@@ -36,7 +36,10 @@ public:
 	void init(const GfxAllocContext& gfxAllocContext);
 	void cleanup();
 
-	uint32_t addMesh(const std::string& filePath, Material& outputMeshMaterial);
+	uint32_t addMesh(
+		const std::string& filePath, 
+		Material& outputMeshMaterial,
+		bool calculateNormals = true);
 	uint32_t addTexture(const std::string& filePath);
 	uint32_t addEmptyTexture();
 	uint32_t addCubeMap(const std::vector<std::string>& filePaths);
