@@ -21,13 +21,15 @@ void DragonScene::init()
 	);
 
 	// Assets
-	uint32_t brdfPinkFabric = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
-	uint32_t brdfRedPhenolic = this->getResourceManager().addBRDF("Resources/BRDFs/red-phenolic.shbrdf");
 	uint32_t brdfWhiteMarble = this->getResourceManager().addBRDF("Resources/BRDFs/white-marble.shbrdf");
+	uint32_t brdfRedPhenolic = this->getResourceManager().addBRDF("Resources/BRDFs/red-phenolic.shbrdf");
+	uint32_t brdfRedFabric2 = this->getResourceManager().addBRDF("Resources/BRDFs/red-fabric2.shbrdf");
 	uint32_t brdfMetal = this->getResourceManager().addBRDF("Resources/BRDFs/silver-metallic-paint.shbrdf");
 	uint32_t brdfBlue = this->getResourceManager().addBRDF("Resources/BRDFs/blue-metallic-paint.shbrdf");
+	uint32_t brdfBlueFabric = this->getResourceManager().addBRDF("Resources/BRDFs/blue-fabric.shbrdf");
 	uint32_t brdfBlueRubber = this->getResourceManager().addBRDF("Resources/BRDFs/blue-rubber.shbrdf");
-	uint32_t brdfGold = this->getResourceManager().addBRDF("Resources/BRDFs/gold-metallic-paint.shbrdf");
+	uint32_t brdfAlumBronze = this->getResourceManager().addBRDF("Resources/BRDFs/alum-bronze.shbrdf");
+	uint32_t brdfAluminaOxide = this->getResourceManager().addBRDF("Resources/BRDFs/alumina-oxide.shbrdf");
 
 	uint32_t whiteTextureId = this->getResourceManager().addTexture("Resources/Textures/white.png");
 
@@ -46,6 +48,32 @@ void DragonScene::init()
 		MeshComponent& modelMesh = this->getComponent<MeshComponent>(sceneEntity);
 		modelMesh.meshId =
 			this->getResourceManager().addMesh("Resources/Models/sponzaSmall.obj", material);
+
+		// Setup materials
+		MaterialSet& matSet = this->getResourceManager().getMaterialSet(material.materialSetIndex);
+		SubmeshMaterial submeshMaterial{};
+		submeshMaterial.brdfIndex = brdfAlumBronze;
+		matSet.applySubmeshMaterial(21, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfAluminaOxide;
+		matSet.applySubmeshMaterial(31, submeshMaterial);
+		matSet.applySubmeshMaterial(32, submeshMaterial);
+		matSet.applySubmeshMaterial(70, submeshMaterial);
+		matSet.applySubmeshMaterial(71, submeshMaterial);
+		matSet.applySubmeshMaterial(161, submeshMaterial);
+		matSet.applySubmeshMaterial(183, submeshMaterial);
+		matSet.applySubmeshMaterial(184, submeshMaterial);
+		matSet.applySubmeshMaterial(185, submeshMaterial);
+		matSet.applySubmeshMaterial(186, submeshMaterial);
+		matSet.applySubmeshMaterial(187, submeshMaterial);
+		matSet.applySubmeshMaterial(188, submeshMaterial);
+		matSet.applySubmeshMaterial(189, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfRedFabric2;
+		matSet.applySubmeshMaterial(182, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfBlueFabric;
+		matSet.applySubmeshMaterial(155, submeshMaterial);
 	}
 
 	// Dragon
