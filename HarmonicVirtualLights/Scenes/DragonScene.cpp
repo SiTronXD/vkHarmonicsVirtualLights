@@ -22,11 +22,12 @@ void DragonScene::init()
 
 	// Assets
 	uint32_t brdfPinkFabric = this->getResourceManager().addBRDF("Resources/BRDFs/pink-fabric.shbrdf");
-	uint32_t brdfRed = this->getResourceManager().addBRDF("Resources/BRDFs/red-fabric.shbrdf");
-	uint32_t brdfGreen = this->getResourceManager().addBRDF("Resources/BRDFs/green-acrylic.shbrdf");
-	uint32_t brdfBlue = this->getResourceManager().addBRDF("Resources/BRDFs/blue-fabric.shbrdf");
-	uint32_t brdfPlant = this->getResourceManager().addBRDF("Resources/BRDFs/green-plastic.shbrdf");
+	uint32_t brdfRedPhenolic = this->getResourceManager().addBRDF("Resources/BRDFs/red-phenolic.shbrdf");
+	uint32_t brdfWhiteMarble = this->getResourceManager().addBRDF("Resources/BRDFs/white-marble.shbrdf");
 	uint32_t brdfMetal = this->getResourceManager().addBRDF("Resources/BRDFs/silver-metallic-paint.shbrdf");
+	uint32_t brdfBlue = this->getResourceManager().addBRDF("Resources/BRDFs/blue-metallic-paint.shbrdf");
+	uint32_t brdfBlueRubber = this->getResourceManager().addBRDF("Resources/BRDFs/blue-rubber.shbrdf");
+	uint32_t brdfGold = this->getResourceManager().addBRDF("Resources/BRDFs/gold-metallic-paint.shbrdf");
 
 	uint32_t whiteTextureId = this->getResourceManager().addTexture("Resources/Textures/white.png");
 
@@ -65,6 +66,24 @@ void DragonScene::init()
 		MeshComponent& modelMesh = this->getComponent<MeshComponent>(dragonEntity);
 		modelMesh.meshId =
 			this->getResourceManager().addMesh("Resources/Models/dragon_vrip.obj", material, false);
+
+		// Setup materials
+		MaterialSet& matSet = this->getResourceManager().getMaterialSet(material.materialSetIndex);
+		SubmeshMaterial submeshMaterial{};
+		submeshMaterial.brdfIndex = brdfBlueRubber;
+		matSet.applySubmeshMaterial(0, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfRedPhenolic;
+		matSet.applySubmeshMaterial(1, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfBlue;
+		matSet.applySubmeshMaterial(2, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfMetal;
+		matSet.applySubmeshMaterial(3, submeshMaterial);
+
+		submeshMaterial.brdfIndex = brdfWhiteMarble;
+		matSet.applySubmeshMaterial(4, submeshMaterial);
 	}
 
 	// Initial camera setup
@@ -73,8 +92,8 @@ void DragonScene::init()
 
 	// Initial light setup
 	this->getRenderer().setSpotlightOrientation(
-		glm::vec3(2.0f, 1.0f, 0.0f),
-		glm::vec3(0.0f)
+		glm::vec3(0.2f, 2.5f, -0.3f),
+		glm::vec3(1.0f, 0.0f, -0.1f)
 	);
 }
 
