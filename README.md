@@ -2,7 +2,6 @@
 An implementation of the HVL algorithm for my bachelor thesis project.
 
 # TODO:
-* Double check clamping range for half angle
 * Use sinc window to try and avoid ringing artefacts
 * Fix direct + indirect contribution relation
 * Consider removing spotlight cutoff, since HVLs are distributed in a square

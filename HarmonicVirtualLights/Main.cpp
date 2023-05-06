@@ -16,7 +16,7 @@ int main()
 	// Create engine within it's own scope
 	{
 		Engine engine;
-		engine.init(new TestScene());
+		engine.init(new SponzaScene());
 	}
 
 	// Display validation errors right after exit

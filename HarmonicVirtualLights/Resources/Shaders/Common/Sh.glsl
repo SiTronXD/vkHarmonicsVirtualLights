@@ -292,8 +292,8 @@ vec3 getIndirectLight(
             
         // Pythagorean identities
         float sinA = hvlRadius / max(hvlDistance, 0.0001f);
-        float alpha = float(sqrt(clamp(1.0f - sinA*sinA, 0.0f, 1.0f))); // alpha = cos(a)
-        float halfAngle = acos(clamp(alpha, 0.0f, 1.0f)); // TODO: check if this clamping range is correct (because of potential -sqrt)
+        float alpha = sqrt(clamp(1.0f - sinA*sinA, 0.0f, 1.0f)); // alpha = cos(a)
+        float halfAngle = acos(clamp(alpha, 0.0f, 1.0f));
 
         // Relative light direction
         vec3 wLightTangentSpace = worldToTangentMat * wLight;
