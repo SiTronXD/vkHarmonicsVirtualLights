@@ -5,8 +5,6 @@
 class TextureCube : public Texture
 {
 private:
-	uint32_t prefilteredMapIndex;
-
 	void copyBufferToCubeMap(
 		VkBuffer buffer, VkImage image,
 		uint32_t width, uint32_t height,
@@ -36,8 +34,4 @@ public:
 		uint32_t mipLevels,
 		VkFormat format,
 		VkImageUsageFlagBits extraUsageFlags = (VkImageUsageFlagBits) 0);
-
-	void setPrefilteredMapIndex(uint32_t index);
-
-	inline uint32_t getPrefilteredMapIndex() const { return this->prefilteredMapIndex; }
 };

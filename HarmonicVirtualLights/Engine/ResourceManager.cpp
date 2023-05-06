@@ -144,26 +144,8 @@ uint32_t ResourceManager::addCubeMap(const std::vector<std::string>& filePaths)
 		filePaths
 	);
 
-	// Create prefiltered map for the loaded cube map
-	uint32_t prefilteredTextureIndex = createdTextureIndex + 1;
-	std::shared_ptr<TextureCube> prefilteredCubeMap(new TextureCube());
-	prefilteredCubeMap->createAsRenderableSampledCubeMap(
-		*this->gfxAllocContext, 
-		createdCubeMap->getWidth(),
-		createdCubeMap->getHeight(),
-		8,
-		VK_FORMAT_R16G16B16A16_SFLOAT,
-		VK_IMAGE_USAGE_STORAGE_BIT
-	);
-
-	// Set index
-	createdCubeMap->setPrefilteredMapIndex(
-		prefilteredTextureIndex
-	);
-
 	// Add resources to list
 	this->textures.push_back(createdCubeMap);
-	this->textures.push_back(prefilteredCubeMap);
 
 	return createdTextureIndex;
 }

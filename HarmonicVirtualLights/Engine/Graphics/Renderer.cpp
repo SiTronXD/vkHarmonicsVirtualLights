@@ -126,9 +126,7 @@ void Renderer::initVulkan()
 	this->createCamUbo();
 
 	this->gfxResManager.init(this->gfxAllocContext);
-	this->resourceProcessor.init(*this, *this->resourceManager, this->gfxAllocContext);
 
-	this->brdfLutTextureIndex = this->resourceProcessor.createBrdfLut();
 	this->rsm.init(this->gfxAllocContext);
 }
 
@@ -661,7 +659,6 @@ Renderer::Renderer()
 	avgDeferredLightMs(0.0f),
 #endif
 
-	brdfLutTextureIndex(~0u),
 	skyboxTextureIndex(~0u)
 {
 }
@@ -680,7 +677,6 @@ void Renderer::init(ResourceManager& resourceManager)
 
 void Renderer::initForScene(Scene& scene)
 {
-	this->resourceProcessor.prefilterCubeMaps();
 	this->createShCoefficientBuffer(scene);
 
 	// Add skybox as entity to scene

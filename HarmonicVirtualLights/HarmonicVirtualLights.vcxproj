@@ -134,7 +134,6 @@
     <ClCompile Include="Engine\Graphics\Mesh.cpp" />
     <ClCompile Include="Engine\Graphics\MeshData.cpp" />
     <ClCompile Include="Engine\Graphics\Renderer.cpp" />
-    <ClCompile Include="Engine\Graphics\ResourceProcessor.cpp" />
     <ClCompile Include="Engine\Graphics\Shaders\ComputeShader.cpp" />
     <ClCompile Include="Engine\Graphics\Shaders\FragmentShader.cpp" />
     <ClCompile Include="Engine\Graphics\Shaders\Shader.cpp" />
@@ -231,7 +230,6 @@
     <ClInclude Include="Engine\Graphics\Mesh.h" />
     <ClInclude Include="Engine\Graphics\MeshData.h" />
     <ClInclude Include="Engine\Graphics\Renderer.h" />
-    <ClInclude Include="Engine\Graphics\ResourceProcessor.h" />
     <ClInclude Include="Engine\Graphics\ShaderStructs.h" />
     <ClInclude Include="Engine\Graphics\Shaders\ComputeShader.h" />
     <ClInclude Include="Engine\Graphics\Shaders\FragmentShader.h" />
@@ -284,13 +282,7 @@
     <ClInclude Include="Scenes\SponzaScene.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Resources\Shaders\ComputeShaders\BrdfLut.comp">
-      <FileType>Document</FileType>
-    </CustomBuild>
     <CustomBuild Include="Resources\Shaders\ComputeShaders\PostProcess.comp">
-      <FileType>Document</FileType>
-    </CustomBuild>
-    <CustomBuild Include="Resources\Shaders\ComputeShaders\PrefilterEnvMap.comp">
       <FileType>Document</FileType>
     </CustomBuild>
     <CustomBuild Include="Resources\Shaders\FragmentShaders\DeferredGeomSkybox.frag">

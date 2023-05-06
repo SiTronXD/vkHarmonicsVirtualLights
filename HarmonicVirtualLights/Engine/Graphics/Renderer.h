@@ -25,7 +25,6 @@
 #include "Mesh.h"
 #include "GfxAllocContext.h"
 #include "GfxResourceManager.h"
-#include "ResourceProcessor.h"
 #include "RSM.h"
 #include "BRDFData.h"
 
@@ -87,12 +86,10 @@ private:
 	ResourceManager* resourceManager;
 
 	GfxResourceManager gfxResManager;
-	ResourceProcessor resourceProcessor;
 
 	// Reflective shadow map
 	RSM rsm;
 
-	uint32_t brdfLutTextureIndex;
 	uint32_t skyboxTextureIndex;
 
 	void initVulkan();

@@ -126,9 +126,6 @@
     <ClCompile Include="Engine\Graphics\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\ResourceProcessor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Swapchain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -341,9 +338,6 @@
     <ClInclude Include="Engine\Graphics\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\ResourceProcessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Graphics\ShaderStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -445,9 +439,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Resources\Shaders\ComputeShaders\BrdfLut.comp" />
     <CustomBuild Include="Resources\Shaders\ComputeShaders\PostProcess.comp" />
-    <CustomBuild Include="Resources\Shaders\ComputeShaders\PrefilterEnvMap.comp" />
     <CustomBuild Include="Resources\Shaders\FragmentShaders\DeferredGeomSkybox.frag" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\DeferredGeomSkybox.vert" />
     <CustomBuild Include="Resources\Shaders\FragmentShaders\Rsm.frag" />

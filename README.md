@@ -9,7 +9,6 @@ An implementation of the HVL algorithm for my bachelor thesis project.
 * Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
 * Optimize smoothstep
 * Fix direct + indirect contribution relation
-* Remove unused assets
 * Consider removing spotlight cutoff, since HVLs are distributed in a square
 * Enable/disable imgui
 

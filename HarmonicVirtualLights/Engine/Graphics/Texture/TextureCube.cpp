@@ -286,7 +286,6 @@ bool TextureCube::createCubeMapMipMaps()
 }
 
 TextureCube::TextureCube()
-	: prefilteredMapIndex(~0u)
 {
 }
 
@@ -390,9 +389,4 @@ bool TextureCube::createAsRenderableSampledCubeMap(
 	this->createTextureSampler();
 
 	return true;
-}
-
-void TextureCube::setPrefilteredMapIndex(uint32_t index)
-{
-	prefilteredMapIndex = index;
 }
