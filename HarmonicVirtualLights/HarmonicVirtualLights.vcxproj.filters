@@ -449,7 +449,6 @@
     <CustomBuild Include="Resources\Shaders\ComputeShaders\PostProcess.comp" />
     <CustomBuild Include="Resources\Shaders\ComputeShaders\PrefilterEnvMap.comp" />
     <CustomBuild Include="Resources\Shaders\FragmentShaders\DeferredGeomSkybox.frag" />
-    <CustomBuild Include="Resources\Shaders\VertexShaders\Pbr.vert" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\DeferredGeomSkybox.vert" />
     <CustomBuild Include="Resources\Shaders\FragmentShaders\Rsm.frag" />
     <CustomBuild Include="Resources\Shaders\VertexShaders\Rsm.vert" />

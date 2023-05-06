@@ -16,7 +16,7 @@ int main()
 	// Create engine within it's own scope
 	{
 		Engine engine;
-		engine.init(new ManyMeshesScene());
+		engine.init(new TestScene());
 	}
 
 	// Display validation errors right after exit

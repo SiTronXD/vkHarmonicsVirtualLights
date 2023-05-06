@@ -2,14 +2,12 @@
 An implementation of the HVL algorithm for my bachelor thesis project.
 
 # TODO:
-* Ethics in report
 * Double check clamping range for half angle
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
 * Use sinc window to try and avoid ringing artefacts
 * "vkHarmonicsVirtualLights"*
 * Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
 * Optimize smoothstep
-* reduce normal format to R32G32
 * Fix direct + indirect contribution relation
 * Remove unused assets
 * Consider removing spotlight cutoff, since HVLs are distributed in a square

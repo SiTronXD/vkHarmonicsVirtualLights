@@ -296,9 +296,6 @@
     <CustomBuild Include="Resources\Shaders\FragmentShaders\DeferredGeomSkybox.frag">
       <FileType>Document</FileType>
     </CustomBuild>
-    <CustomBuild Include="Resources\Shaders\VertexShaders\Pbr.vert">
-      <FileType>Document</FileType>
-    </CustomBuild>
     <CustomBuild Include="Resources\Shaders\VertexShaders\DeferredGeomSkybox.vert">
       <FileType>Document</FileType>
     </CustomBuild>
