@@ -52,10 +52,10 @@ void DragonScene::init()
 		// Setup materials
 		MaterialSet& matSet = this->getResourceManager().getMaterialSet(material.materialSetIndex);
 		SubmeshMaterial submeshMaterial{};
-		submeshMaterial.brdfIndex = brdfAlumBronze;
+		submeshMaterial.brdfIndex = brdfAluminaOxide;
 		matSet.applySubmeshMaterial(21, submeshMaterial);
 
-		submeshMaterial.brdfIndex = brdfAluminaOxide;
+		submeshMaterial.brdfIndex = brdfAlumBronze;
 		matSet.applySubmeshMaterial(31, submeshMaterial);
 		matSet.applySubmeshMaterial(32, submeshMaterial);
 		matSet.applySubmeshMaterial(70, submeshMaterial);

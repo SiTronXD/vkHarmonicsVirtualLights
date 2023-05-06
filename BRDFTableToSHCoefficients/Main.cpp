@@ -78,10 +78,9 @@ void getShError(double* brdf, int n, int NUM_SH_COEFFS, int k, const std::vector
 
 int main(int argc, char* argv[])
 {
-	//const std::string materialFileName = "pink-fabric.binary";
+	const std::string materialFileName = "pink-fabric.binary";
 	//const std::string materialFileName = "white-fabric.binary";
 	//const std::string materialFileName = "red-fabric.binary";
-	const std::string materialFileName = "white-marble.binary";
 	const std::string fileName = "brdfs/" + materialFileName;
 	double* brdf;
 
