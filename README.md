@@ -1,15 +1,15 @@
-# Harmonic Virtual Lights
+# Harmonics Virtual Lights
 An implementation of the HVL algorithm for my bachelor thesis project.
 
 # TODO:
 * Double check clamping range for half angle
-* "TODO: fix edge case where normal == viewDir" in tangent space transform
 * Use sinc window to try and avoid ringing artefacts
-* "vkHarmonicsVirtualLights"*
-* Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
-* Optimize smoothstep
 * Fix direct + indirect contribution relation
 * Consider removing spotlight cutoff, since HVLs are distributed in a square
+
+* Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
+* Optimize smoothstep
+* "TODO: fix edge case where normal == viewDir" in tangent space transform
 * Enable/disable imgui
 
 # Vulkan features used
