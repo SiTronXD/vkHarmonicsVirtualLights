@@ -6,7 +6,7 @@
 #include "../Common/ColorTransformations.glsl"
 
 #define LOCAL_SIZE 16
-#define THREADS_PER_PIXEL 2
+#define THREADS_PER_PIXEL 1
 
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
 #define SHADOW_BIAS 0.005f
