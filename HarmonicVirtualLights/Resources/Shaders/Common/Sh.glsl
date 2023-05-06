@@ -373,11 +373,6 @@ vec3 getIndirectLight(
 	    }
     }
 
-    if(numHvls == 63)
-    {
-        color = vec3(10.0f, 0.0f, 0.0f);
-    }
-
 	return color;
 }
 
