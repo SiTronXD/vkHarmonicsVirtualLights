@@ -114,6 +114,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Scenes\ManyMeshesScene.cpp" />
     <ClCompile Include="Scenes\DragonScene.cpp" />
     <ClCompile Include="Engine\Graphics\BRDFData.cpp" />
     <ClCompile Include="Engine\Application\Input.cpp" />
@@ -208,6 +209,7 @@
     <ClCompile Include="Scenes\SponzaScene.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Scenes\ManyMeshesScene.h" />
     <ClInclude Include="Scenes\DragonScene.h" />
     <ClInclude Include="Engine\Graphics\BRDFData.h" />
     <ClInclude Include="Engine\Application\Input.h" />

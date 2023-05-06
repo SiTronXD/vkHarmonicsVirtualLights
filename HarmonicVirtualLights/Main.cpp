@@ -4,6 +4,7 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/SponzaScene.h"
 #include "Scenes/DragonScene.h"
+#include "Scenes/ManyMeshesScene.h"
 
 int main()
 {
@@ -15,7 +16,7 @@ int main()
 	// Create engine within it's own scope
 	{
 		Engine engine;
-		engine.init(new DragonScene());
+		engine.init(new ManyMeshesScene());
 	}
 
 	// Display validation errors right after exit
