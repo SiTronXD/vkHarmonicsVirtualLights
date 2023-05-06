@@ -33,6 +33,7 @@ layout(push_constant) uniform PushConstantData
 	vec4 camPos;
 } pc;
 
+// 16384 bytes are guaranteed to be available in Vulkan
 shared vec3 indirectLightColors[LOCAL_SIZE * LOCAL_SIZE * THREADS_PER_PIXEL];
 
 float getShadowFactor(vec3 fragWorldPos, vec3 toLightDir, vec3 toLightVec)
