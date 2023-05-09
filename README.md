@@ -1,13 +1,8 @@
 # Harmonics Virtual Lights
-An implementation of the HVL algorithm for my bachelor thesis project.
+A Vulkan implementation of HVLs for my bachelor thesis project. A more detailed description + screenshots will be added later.
 
 # TODO:
-* Use sinc window to try and avoid ringing artefacts
-* Fix direct + indirect contribution relation
 * Consider removing spotlight cutoff, since HVLs are distributed in a square
-
-* Fix barrier order to have RSM, shadow map and pre-depth overlap eachother
-* Optimize smoothstep
 * "TODO: fix edge case where normal == viewDir" in tangent space transform
 * Enable/disable imgui
 
