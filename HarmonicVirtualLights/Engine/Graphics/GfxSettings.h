@@ -3,8 +3,8 @@
 #include <array>
 #include <vulkan/vulkan.h>
 
-//#define RECORD_CPU_TIMES
-#define RECORD_GPU_TIMES
+#define RECORD_CPU_TIMES
+//#define RECORD_GPU_TIMES
 #define ALERT_FINAL_AVERAGE
 
 class GfxSettings

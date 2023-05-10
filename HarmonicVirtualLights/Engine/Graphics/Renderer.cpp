@@ -77,7 +77,7 @@ void Renderer::initVulkan()
 	this->swapchain.createFramebuffers();
 
 #ifdef RECORD_GPU_TIMES
-	this->queryPools.create(this->device, GfxSettings::FRAMES_IN_FLIGHT, 8);
+	this->queryPools.create(this->device, GfxSettings::FRAMES_IN_FLIGHT, 9);
 #endif
 
 	// Deferred light compute pipelines
@@ -462,8 +462,38 @@ void Renderer::draw(Scene& scene)
 		Log::error("Failed to present swapchain image.");
 	}
 
+
 #ifdef RECORD_CPU_TIMES
-	Log::write("waitForFence: " + std::to_string(waitForFencesMs) + "   recordCommandBuffer: " + std::to_string(recordCommandBufferMs) + "   present ms: " + std::to_string(presentMs));
+	// Gather this frame's data
+	float cpuFrameTimeMs = (Time::getDT() * 1000.0f);
+
+	// Average
+	float t = 1.0f / (this->elapsedFrames + 1.0f);
+	this->avgWaitForFenceMs = (1.0f - t) * this->avgWaitForFenceMs + t * waitForFencesMs;
+	this->avgRecordCommandBufferMs = (1.0f - t) * this->avgRecordCommandBufferMs + t * recordCommandBufferMs;
+	this->avgPresentMs = (1.0f - t) * this->avgPresentMs + t * presentMs;
+	this->avgCpuFrameTimeMs = (1.0f - t) * this->avgCpuFrameTimeMs + t * cpuFrameTimeMs;
+	this->elapsedFrames++;
+
+	// Print
+	Log::write(
+		"elapsed frames: " + std::to_string(this->elapsedFrames) + 
+		"   waitForFence: " + std::to_string(waitForFencesMs) + 
+		"   recordCommandBuffer: " + std::to_string(recordCommandBufferMs) + 
+		"   present ms: " + std::to_string(presentMs) + 
+		"   CPU frame time ms: " + std::to_string(cpuFrameTimeMs));
+
+	// Print average times after 500 frames
+#ifdef ALERT_FINAL_AVERAGE
+	if (this->elapsedFrames >= this->WAIT_ELAPSED_FRAMES_FOR_AVG - 0.5f)
+	{
+		Log::alert(
+			"waitForFence ms: " + std::to_string(this->avgWaitForFenceMs) +
+			"   recordCommandBuffer ms: " + std::to_string(this->avgRecordCommandBufferMs) +
+			"   present ms: " + std::to_string(this->avgPresentMs) +
+			"   CPU frame time ms: " + std::to_string(this->avgCpuFrameTimeMs));
+	}
+#endif
 #endif 
 
 	// TODO: fix this by waiting at the start of a frame
@@ -488,6 +518,10 @@ void Renderer::draw(Scene& scene)
 		float(this->queryPools.getQueryResult(GfxState::getFrameIndex(), 7) -
 			this->queryPools.getQueryResult(GfxState::getFrameIndex(), 6)) *
 		GpuProperties::getTimestampPeriod() * 1e-6;
+	float entireGpuFrameTimeMs = 
+		float(this->queryPools.getQueryResult(GfxState::getFrameIndex(), 8) -
+		this->queryPools.getQueryResult(GfxState::getFrameIndex(), 0)) *
+		GpuProperties::getTimestampPeriod() * 1e-6;
 
 	// Average
 	float t = 1.0f / (this->elapsedFrames + 1.0f);
@@ -495,6 +529,7 @@ void Renderer::draw(Scene& scene)
 	this->avgSmMs = (1.0f - t) * this->avgSmMs + t * smMs;
 	this->avgDeferredGeomMs = (1.0f - t) * this->avgDeferredGeomMs + t * deferredGeomMs;
 	this->avgDeferredLightMs = (1.0f - t) * this->avgDeferredLightMs + t * deferredLightMs;
+	this->avgGpuFrameTimeMs = (1.0f - t) * this->avgGpuFrameTimeMs + t * entireGpuFrameTimeMs;
 	this->elapsedFrames++;
 
 	// Print
@@ -502,9 +537,14 @@ void Renderer::draw(Scene& scene)
 	
 	// Print average times after 500 frames
 #ifdef ALERT_FINAL_AVERAGE
-	if (this->elapsedFrames >= 500.0f - 0.5f)
+	if (this->elapsedFrames >= this->WAIT_ELAPSED_FRAMES_FOR_AVG - 0.5f)
 	{
-		Log::alert("rsm ms: " + std::to_string(this->avgRsmMs) + "   sm ms: " + std::to_string(this->avgSmMs) + "   deferred geom ms: " + std::to_string(this->avgDeferredGeomMs) + "   deferred light ms: " + std::to_string(this->avgDeferredLightMs));
+		Log::alert(
+			"rsm ms: " + std::to_string(this->avgRsmMs) + 
+			"   sm ms: " + std::to_string(this->avgSmMs) + 
+			"   deferred geom ms: " + std::to_string(this->avgDeferredGeomMs) + 
+			"   deferred light ms: " + std::to_string(this->avgDeferredLightMs) + 
+			"   GPU frame time ms: " + std::to_string(this->avgGpuFrameTimeMs));
 	}
 #endif
 #endif
@@ -625,6 +665,14 @@ void Renderer::recordCommandBuffer(
 	//this->renderImgui(commandBuffer, imguiDrawData);
 	this->computePostProcess(commandBuffer, imageIndex);
 
+#ifdef RECORD_GPU_TIMES
+	commandBuffer.writeTimestamp(
+		this->queryPools[GfxState::getFrameIndex()],
+		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		8
+	);
+#endif
+
 	// Stop recording
 	commandBuffer.end();
 }
@@ -657,6 +705,15 @@ Renderer::Renderer()
 	avgSmMs(0.0f),
 	avgDeferredGeomMs(0.0f),
 	avgDeferredLightMs(0.0f),
+	avgGpuFrameTimeMs(0.0f),
+#endif
+
+#ifdef RECORD_CPU_TIMES
+	elapsedFrames(0.0f),
+	avgWaitForFenceMs(0.0f),
+	avgRecordCommandBufferMs(0.0f),
+	avgPresentMs(0.0f),
+	avgCpuFrameTimeMs(0.0f),
 #endif
 
 	skyboxTextureIndex(~0u)

@@ -38,6 +38,8 @@ class DescriptorPool;
 class Renderer
 {
 private:
+	const float WAIT_ELAPSED_FRAMES_FOR_AVG = 500.0f;
+
 	VulkanInstance instance;
 	DebugMessenger debugMessenger;
 	Surface surface;
@@ -57,6 +59,15 @@ private:
 	float avgSmMs;
 	float avgDeferredGeomMs;
 	float avgDeferredLightMs;
+	float avgGpuFrameTimeMs;
+#endif
+
+#ifdef RECORD_CPU_TIMES
+	float elapsedFrames;
+	float avgWaitForFenceMs;
+	float avgRecordCommandBufferMs;
+	float avgPresentMs;
+	float avgCpuFrameTimeMs;
 #endif
 
 	// Compute
