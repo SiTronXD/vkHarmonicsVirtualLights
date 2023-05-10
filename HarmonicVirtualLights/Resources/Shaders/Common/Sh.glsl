@@ -11,6 +11,7 @@
 #define RSM_FOV (HALF_PI)
 #define COS_HALF_FOV 0.70710678118654752440084436210485
 #define PRIMARY_LIGHT_POWER 400.0f
+#define MAX_RSM_SIZE 8
 
 #define NUM_ANGLES 90
 #define MAX_L 6
@@ -32,6 +33,9 @@ layout(binding = 6) uniform sampler2D shadowMapTex;
 layout(binding = 7, rgba32f) uniform readonly image2D rsmPositionTex;
 layout(binding = 8, rgba32f) uniform readonly image2D rsmNormalTex;
 layout(binding = 9, r8ui) uniform readonly uimage2D rsmBRDFIndexTex;
+
+// 1024 * 16 = 16384 bytes are guaranteed to be available in Vulkan
+shared vec3 hvlEmissionCoefficients[MAX_RSM_SIZE * MAX_RSM_SIZE * ((HVL_EMISSION_L + 1) * (HVL_EMISSION_L + 1))];
 
 int factorial(int v)
 {
@@ -136,6 +140,31 @@ uint getBrdfCosVectorIndex(vec3 normal, vec3 viewDir, uint brdfIndex)
     return getBrdfVectorIndex(normal, viewDir, brdfIndex) + NUM_ANGLES;
 }
 
+void insertHvlCoeffsIntoSharedMem(ivec2 hvlIndex, vec3 lightPos)
+{
+    vec3 hvlNormal = imageLoad(rsmNormalTex, hvlIndex).rgb;
+    vec3 hvlPos = imageLoad(rsmPositionTex, hvlIndex).rgb;
+    vec3 hvlToPrimaryLight = normalize(lightPos - hvlPos);
+    uint yBrdfIndex = imageLoad(rsmBRDFIndexTex, hvlIndex).r;
+
+    const SHData FPrime = 
+        shCoefficients.coefficientSets[getBrdfVectorIndex(hvlNormal, hvlToPrimaryLight, yBrdfIndex)];
+    
+    // Loop through coefficients
+    const int HVL_EMISSION_NUM_COEFFS = (HVL_EMISSION_L + 1) * (HVL_EMISSION_L + 1);
+    for(int i = 0; i < HVL_EMISSION_NUM_COEFFS; ++i)
+    {
+        hvlEmissionCoefficients[
+            (hvlIndex.y * MAX_RSM_SIZE + hvlIndex.x) * HVL_EMISSION_NUM_COEFFS 
+            + i
+        ] = vec3(
+                FPrime.coeffs[i * 3 + 0],  // R
+                FPrime.coeffs[i * 3 + 1],  // G
+                FPrime.coeffs[i * 3 + 2]   // B
+            );
+    }
+}
+
 // Proportion of HVL that lies within shading hemisphere
 float getH(float halfAngle, vec3 xNormal, vec3 wj)
 {
@@ -162,7 +191,7 @@ float getG(float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj)
 }
 
 // Incoming luminance from HVL to shaded point
-vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj, vec3 hvlToPrimaryLight, uint yBrdfIndex)
+vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj, vec3 hvlToPrimaryLight, uint yBrdfIndex, ivec2 hvlSampleIndex)
 {
     float capitalPhi = PRIMARY_LIGHT_POWER / (fRsmSize * fRsmSize);
     float g = getG(halfAngle, radius, jNormal, xNormal, mWj);
@@ -179,7 +208,7 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
     #endif
 
     // Obtain coefficient vector F (without cosine term)
-    const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(jNormal, hvlToPrimaryLight, yBrdfIndex)];
+    //const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(jNormal, hvlToPrimaryLight, yBrdfIndex)];
     vec3 dotFY = vec3(0.0f);
     /*for(int lSH = 0; lSH <= HVL_EMISSION_L; ++lSH)
     {
@@ -198,12 +227,17 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
     const int HVL_EMISSION_NUM_COEFFS = (HVL_EMISSION_L + 1) * (HVL_EMISSION_L + 1);
     for(int i = 0; i < HVL_EMISSION_NUM_COEFFS; ++i)
     {
-        dotFY += 
+        /*dotFY += 
             vec3(
                 FPrime.coeffs[i * 3 + 0],  // R
                 FPrime.coeffs[i * 3 + 1],  // G
                 FPrime.coeffs[i * 3 + 2]   // B
-            ) * shBasisFuncValues[i];
+            ) * shBasisFuncValues[i];*/
+        dotFY += 
+            hvlEmissionCoefficients[
+                (hvlSampleIndex.y * MAX_RSM_SIZE + hvlSampleIndex.x) * HVL_EMISSION_NUM_COEFFS 
+                + i] * 
+            shBasisFuncValues[i];
     }
 
     return dotFY * capitalPhi * g;
@@ -358,7 +392,7 @@ vec3 getIndirectLight(
             }
 
             // Add "Lj(L * F)" from each HVL
-            vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex);
+            vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex, uvIndex);
             color += Lj * dotLF;
 
             // Visualize HVL sizes

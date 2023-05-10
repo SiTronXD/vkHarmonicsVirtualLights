@@ -5,14 +5,14 @@
 #include "../Common/Sh.glsl"
 #include "../Common/ColorTransformations.glsl"
 
+// LOCAL_SIZE has to be >= MAX_RSM_SIZE
 #define LOCAL_SIZE 16
-#define THREADS_PER_PIXEL 1
 
 #define MAX_REFLECTION_LOD (8.0f - 1.0f)
 #define SHADOW_BIAS 0.005f
 #define SHADOW_MAP_SIZE 256.0f
 
-layout (local_size_x = LOCAL_SIZE, local_size_y = LOCAL_SIZE, local_size_z = THREADS_PER_PIXEL) in;
+layout (local_size_x = LOCAL_SIZE, local_size_y = LOCAL_SIZE, local_size_z = 1) in;
 
 layout (binding = 0, rgba32f) uniform readonly image2D deferredPosition;
 layout (binding = 1, rgba32f) uniform readonly image2D deferredNormal;
@@ -32,9 +32,6 @@ layout(push_constant) uniform PushConstantData
 	uvec4 resolution;
 	vec4 camPos;
 } pc;
-
-// 16384 bytes are guaranteed to be available in Vulkan
-shared vec3 indirectLightColors[LOCAL_SIZE * LOCAL_SIZE * THREADS_PER_PIXEL];
 
 float getShadowFactor(vec3 fragWorldPos, vec3 toLightDir, vec3 toLightVec)
 {
@@ -72,7 +69,17 @@ float getShadowFactor(vec3 fragWorldPos, vec3 toLightDir, vec3 toLightVec)
 void main()
 {
 	uvec2 index = gl_GlobalInvocationID.xy;
-	uvec3 localIndex = gl_LocalInvocationID.xyz;
+	uvec2 localIndex = gl_LocalInvocationID.xy;
+	
+	vec3 lightPos = lightCamUbo.pos.xyz;
+	int rsmSize = int(lightCamUbo.pos.w + 0.5f);
+
+	// Insert HVL BRDF coefficients into shared memory
+	if(localIndex.x < rsmSize && localIndex.y < rsmSize)
+	{
+		insertHvlCoeffsIntoSharedMem(ivec2(localIndex), lightPos);
+	}
+	barrier();
 
 	// Make sure compute work is within bounds
 	if(index.x >= pc.resolution.x || index.y >= pc.resolution.y)
@@ -94,43 +101,18 @@ void main()
 	else
 	{
 		// Environment color
-		vec3 lightPos = lightCamUbo.pos.xyz;
 		vec3 toLightVec = lightPos - worldPos;
 		vec3 L = normalize(toLightVec);
 		vec3 V = normalize(pc.camPos.xyz - worldPos);
 
-		int rsmSize = int(lightCamUbo.pos.w + 0.5f);
-		int numHvlsPerThread = rsmSize * rsmSize / THREADS_PER_PIXEL;
-		int startHvlIndex = numHvlsPerThread * int(localIndex.z);
+		int numHvlsPerThread = rsmSize * rsmSize;
+		int startHvlIndex = 0;
 
 		// Indirect
-		vec3 indirL = getIndirectLight(worldPos, lightPos, worldNormal.xyz, V, rsmSize, xBrdfIndex, startHvlIndex, numHvlsPerThread);
-		indirectLightColors[
-			localIndex.y * LOCAL_SIZE * THREADS_PER_PIXEL +
-			localIndex.x * THREADS_PER_PIXEL + 
-			localIndex.z] = indirL;
-		
-		//color += indirectColor;
-		if(localIndex.z == 0u)
-			color += getDirectLight(worldPos, lightPos, worldNormal.xyz, V, xBrdfIndex) * getShadowFactor(worldPos, L, toLightVec);
+		color += getIndirectLight(worldPos, lightPos, worldNormal.xyz, V, rsmSize, xBrdfIndex, startHvlIndex, numHvlsPerThread);
+		color += getDirectLight(worldPos, lightPos, worldNormal.xyz, V, xBrdfIndex) * getShadowFactor(worldPos, L, toLightVec);
 	}
 	
-	barrier();
-
 	// Write color
-	if(localIndex.z == 0u)
-	{
-		if(renderEnvironment)
-		{
-			for(int i = 0; i < THREADS_PER_PIXEL; ++i)
-			{
-				color += indirectLightColors[
-					localIndex.y * LOCAL_SIZE * THREADS_PER_PIXEL +
-					localIndex.x * THREADS_PER_PIXEL + 
-					i];
-			}
-		}
-
-		imageStore(hdrImage, ivec2(index), vec4(color, 1.0f));
-	}
+	imageStore(hdrImage, ivec2(index), vec4(color, 1.0f));
 }
