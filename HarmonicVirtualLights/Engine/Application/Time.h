@@ -17,6 +17,9 @@ private:
 
 	static std::chrono::system_clock::time_point userLastTime;
 	static std::chrono::duration<float> userElapsedSeconds;
+	static std::chrono::system_clock::time_point godUserLastTime;
+	static std::chrono::duration<float> godUserElapsedSeconds;
+	static float godUserTime;
 
 	static void init();
 	static void updateDeltaTime();
@@ -28,4 +31,8 @@ public:
 
 	static void startTimer();
 	static float endTimer();
+
+	static void startGodTimer();
+	static void endGodTimer();
+	static float getGodTime();
 };

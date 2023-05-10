@@ -465,7 +465,7 @@ void Renderer::draw(Scene& scene)
 
 #ifdef RECORD_CPU_TIMES
 	// Gather this frame's data
-	float cpuFrameTimeMs = (Time::getDT() * 1000.0f);
+	float cpuFrameTimeMs = (Time::getGodTime() * 1000.0f);
 
 	// Average
 	float t = 1.0f / (this->elapsedFrames + 1.0f);

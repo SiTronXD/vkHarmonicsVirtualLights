@@ -44,6 +44,8 @@ void Engine::init(Scene* initialScene)
 	Time::init();
 	while (this->window.isRunning())
 	{
+		Time::startGodTimer();
+
 		// Update before "game logic"
 		this->window.update();
 		Time::updateDeltaTime();
@@ -71,6 +73,8 @@ void Engine::init(Scene* initialScene)
 		if (Time::hasOneSecondPassed())
 			Log::write("FPS: " + std::to_string(1.0f / Time::getDT()));
 #endif
+
+		Time::endGodTimer();
 	}
 
 	// Cleanup

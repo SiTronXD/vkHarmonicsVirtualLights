@@ -11,6 +11,9 @@ std::chrono::duration<float> Time::elapsedSeconds = std::chrono::duration<float>
 
 std::chrono::system_clock::time_point Time::userLastTime = std::chrono::system_clock::time_point();
 std::chrono::duration<float> Time::userElapsedSeconds = std::chrono::duration<float>();
+std::chrono::system_clock::time_point Time::godUserLastTime = std::chrono::system_clock::time_point();
+std::chrono::duration<float> Time::godUserElapsedSeconds = std::chrono::duration<float>();
+float Time::godUserTime = 0.0f;
 
 void Time::init()
 {
@@ -46,4 +49,21 @@ float Time::endTimer()
 	userElapsedSeconds = std::chrono::system_clock::now() - userLastTime;
 
 	return userElapsedSeconds.count();
+}
+
+void Time::startGodTimer()
+{
+	godUserLastTime = std::chrono::system_clock::now();
+}
+
+void Time::endGodTimer()
+{
+	godUserElapsedSeconds = std::chrono::system_clock::now() - godUserLastTime;
+
+	godUserTime = godUserElapsedSeconds.count();
+}
+
+float Time::getGodTime()
+{
+	return godUserTime;
 }
