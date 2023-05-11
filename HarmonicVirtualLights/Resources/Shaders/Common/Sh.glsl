@@ -428,21 +428,21 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
         );
     #endif
 
-    // Obtain coefficient vector F (with cosine term)
-    const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
+    // Obtain coefficient vector F' (without cosine term)
+    const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(normal, viewDir, xBrdfIndex)];
     const int DIRECT_CONVOLUTION_NUM_COEFFS = (DIRECT_CONVOLUTION_L + 1) * (DIRECT_CONVOLUTION_L + 1);
     for(int i = 0; i < DIRECT_CONVOLUTION_NUM_COEFFS; ++i)
     {
         color += 
             vec3(
-                F.coeffs[i * 3 + 0],  // R
-                F.coeffs[i * 3 + 1],  // G
-                F.coeffs[i * 3 + 2]   // B
+                FPrime.coeffs[i * 3 + 0],  // R
+                FPrime.coeffs[i * 3 + 1],  // G
+                FPrime.coeffs[i * 3 + 2]   // B
             ) * shBasisFuncValues[i];
     }
 
-    // Step function. Rewritten so 0 is returned when dot(N, L) = 0.
-    color *= 1.0f - step(0.0f, -dot(normal, toLight)); 
+    // Cos(theta)
+    color *= max(dot(normal, toLight), 0.0f);
 
     //color *= PRIMARY_LIGHT_POWER;
     color *= 20.0f;
