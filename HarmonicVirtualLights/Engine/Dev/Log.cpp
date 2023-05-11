@@ -23,6 +23,15 @@ void Log::write(const std::string& message)
 	std::cout << "[Log]: " << message << std::endl;
 }
 
+void Log::writeAlert(const std::string& message)
+{
+	std::cout << "----------- [Log] -----------" << std::endl;
+	std::cout << message << std::endl;
+	std::cout << "----------- [Log End] -----------" << std::endl;
+
+	Log::alert(message);
+}
+
 void Log::warning(const std::string& message)
 {
 	std::cout << "[Log Warning]: " << message << std::endl;

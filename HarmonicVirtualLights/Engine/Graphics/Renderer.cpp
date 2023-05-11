@@ -4,6 +4,7 @@
 #include "Vulkan/PipelineBarrier.h"
 #include "Vulkan/DescriptorSet.h"
 #include "Texture/TextureCube.h"
+#include "../Dev/StrHelper.h"
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -487,11 +488,11 @@ void Renderer::draw(Scene& scene)
 #ifdef ALERT_FINAL_AVERAGE
 	if (this->elapsedFrames >= this->WAIT_ELAPSED_FRAMES_FOR_AVG - 0.5f)
 	{
-		Log::alert(
-			"waitForFence ms: " + std::to_string(this->avgWaitForFenceMs) +
-			"   recordCommandBuffer ms: " + std::to_string(this->avgRecordCommandBufferMs) +
-			"   present ms: " + std::to_string(this->avgPresentMs) +
-			"   CPU frame time ms: " + std::to_string(this->avgCpuFrameTimeMs));
+		Log::writeAlert(
+			"waitForFence ms: " + StrHelper::toTimingStr(this->avgWaitForFenceMs) + "\n" +
+			"recordCommandBuffer ms: " + StrHelper::toTimingStr(this->avgRecordCommandBufferMs) + "\n" +
+			"present ms: " + StrHelper::toTimingStr(this->avgPresentMs) + "\n" +
+			"CPU frame time ms: " + StrHelper::toTimingStr(this->avgCpuFrameTimeMs));
 	}
 #endif
 #endif 
@@ -539,12 +540,12 @@ void Renderer::draw(Scene& scene)
 #ifdef ALERT_FINAL_AVERAGE
 	if (this->elapsedFrames >= this->WAIT_ELAPSED_FRAMES_FOR_AVG - 0.5f)
 	{
-		Log::alert(
-			"rsm ms: " + std::to_string(this->avgRsmMs) + 
-			"   sm ms: " + std::to_string(this->avgSmMs) + 
-			"   deferred geom ms: " + std::to_string(this->avgDeferredGeomMs) + 
-			"   deferred light ms: " + std::to_string(this->avgDeferredLightMs) + 
-			"   GPU frame time ms: " + std::to_string(this->avgGpuFrameTimeMs));
+		Log::writeAlert(
+			"rsm ms: " + StrHelper::toTimingStr(this->avgRsmMs) + "\n" +
+			"sm ms: " + StrHelper::toTimingStr(this->avgSmMs) + "\n" +
+			"deferred geom ms: " + StrHelper::toTimingStr(this->avgDeferredGeomMs) + "\n" +
+			"deferred light ms: " + StrHelper::toTimingStr(this->avgDeferredLightMs) + "\n" +
+			"GPU frame time ms: " + StrHelper::toTimingStr(this->avgGpuFrameTimeMs));
 	}
 #endif
 #endif

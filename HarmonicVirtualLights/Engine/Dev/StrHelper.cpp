@@ -19,3 +19,19 @@ void StrHelper::splitString(
 	// Add remaining string
 	output.emplace_back(str);
 }
+
+std::string StrHelper::toTimingStr(float x)
+{
+	// Round value
+	float roundedX = SMath::roundToThreeDecimals(x);
+	std::string s = std::to_string(roundedX);
+
+	// Split string
+	std::vector<std::string> splitStrings; 
+	StrHelper::splitString(s, '.', splitStrings);
+
+	// Keep 3 chars
+	splitStrings[1] = splitStrings[1].substr(0, 3);
+
+	return splitStrings[0] + "." + splitStrings[1];
+}

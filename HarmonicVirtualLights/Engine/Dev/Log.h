@@ -9,6 +9,7 @@ private:
 
 public:
 	static void write(const std::string& message);
+	static void writeAlert(const std::string& message);
 	static void warning(const std::string& message);
 	static void error(const std::string& errorMessage);
 	static void alert(const std::string& errorMessage);

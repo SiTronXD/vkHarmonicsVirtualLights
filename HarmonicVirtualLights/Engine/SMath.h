@@ -8,4 +8,6 @@ class SMath
 private:
 public:
 	static const float PI;
+
+	static float roundToThreeDecimals(float x);
 };
