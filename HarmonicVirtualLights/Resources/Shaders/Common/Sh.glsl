@@ -10,7 +10,8 @@
 
 #define RSM_FOV (HALF_PI)
 #define COS_HALF_FOV 0.70710678118654752440084436210485
-#define PRIMARY_LIGHT_POWER 400.0f
+#define PRIMARY_LIGHT_POWER 20.0f
+#define PRIMARY_LIGHT_POWER_HVL (400.0f) // This can be used separately to enhance indirect light
 #define MAX_RSM_SIZE 8
 
 #define NUM_ANGLES 90
@@ -193,7 +194,7 @@ float getG(float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj)
 // Incoming luminance from HVL to shaded point
 vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNormal, vec3 mWj, vec3 hvlToPrimaryLight, uint yBrdfIndex, ivec2 hvlSampleIndex)
 {
-    float capitalPhi = PRIMARY_LIGHT_POWER / (fRsmSize * fRsmSize);
+    float capitalPhi = PRIMARY_LIGHT_POWER_HVL / (fRsmSize * fRsmSize);
     float g = getG(halfAngle, radius, jNormal, xNormal, mWj);
     
     // Relative light direction
@@ -399,8 +400,7 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
     // Cos(theta)
     color *= max(dot(normal, toLight), 0.0f);
 
-    //color *= PRIMARY_LIGHT_POWER;
-    color *= 20.0f;
+    color *= PRIMARY_LIGHT_POWER;
 
 	// Spotlight attenuation
 	color *= 1.0f / max(dot(toLightVec, toLightVec), 0.0001f);
