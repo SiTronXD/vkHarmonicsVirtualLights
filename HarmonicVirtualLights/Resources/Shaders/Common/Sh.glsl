@@ -210,29 +210,9 @@ vec3 getLj(float fRsmSize, float halfAngle, float radius, vec3 jNormal, vec3 xNo
     // Obtain coefficient vector F (without cosine term)
     //const SHData FPrime = shCoefficients.coefficientSets[getBrdfVectorIndex(jNormal, hvlToPrimaryLight, yBrdfIndex)];
     vec3 dotFY = vec3(0.0f);
-    /*for(int lSH = 0; lSH <= HVL_EMISSION_L; ++lSH)
-    {
-        for(int mSH = -lSH; mSH <= lSH; ++mSH)
-        {
-            int index = lSH * (lSH + 1) + mSH;
-
-            dotFY += 
-                vec3(
-                    FPrime.coeffs[index * 3 + 0],  // R
-                    FPrime.coeffs[index * 3 + 1],  // G
-                    FPrime.coeffs[index * 3 + 2]   // B
-                ) * shBasisFuncValues[index];
-        }
-    }*/
     const int HVL_EMISSION_NUM_COEFFS = (HVL_EMISSION_L + 1) * (HVL_EMISSION_L + 1);
     for(int i = 0; i < HVL_EMISSION_NUM_COEFFS; ++i)
     {
-        /*dotFY += 
-            vec3(
-                FPrime.coeffs[i * 3 + 0],  // R
-                FPrime.coeffs[i * 3 + 1],  // G
-                FPrime.coeffs[i * 3 + 2]   // B
-            ) * shBasisFuncValues[i];*/
         dotFY += 
             hvlEmissionCoefficients[
                 (hvlSampleIndex.y * MAX_RSM_SIZE + hvlSampleIndex.x) * HVL_EMISSION_NUM_COEFFS 
@@ -293,16 +273,12 @@ vec3 getIndirectLight(
     // Loop through each HVL
     int x = (startHvlIndex % rsmSize);
     int y = startHvlIndex / rsmSize;
-    /*int x = 0;
-    int y = 0;*/
+    
     //for(int y = 0; y < rsmSize; ++y)
     for(int hvlIndex = 0; hvlIndex < numHvls; ++hvlIndex)
     {
         //for(int x = 0; x < rsmSize; ++x)
 	    {
-            /*x = (hvlIndex % rsmSize);
-            y = hvlIndex / rsmSize;*/
-            
             ivec2 uvIndex = ivec2(x, y);
             vec3 hvlNormal = imageLoad(rsmNormalTex, uvIndex).rgb;
 
@@ -313,8 +289,6 @@ vec3 getIndirectLight(
             }
 
             // HVL cache
-            /*vec3 hvlPos = texture(rsmPositionTex, uv).rgb;
-            uint yBrdfIndex = texture(rsmBRDFIndexTex, uv).r;*/
             vec3 hvlPos = imageLoad(rsmPositionTex, uvIndex).rgb;
             uint yBrdfIndex = imageLoad(rsmBRDFIndexTex, uvIndex).r;
 
@@ -344,33 +318,14 @@ vec3 getIndirectLight(
                 );
             #endif
 
-            // L * F
-            /*vec3 dotLF = vec3(0.0f);
-            for(int lSH = 0; lSH <= CONVOLUTION_L; ++lSH)
-            {
-                float factorCoeffL = getFactorCoeffL(lSH, alpha);
-
-                for(int mSH = -lSH; mSH <= lSH; ++mSH)
-                {
-                    int index = lSH * (lSH + 1) + mSH;
-                    float Llm = factorCoeffL * shBasisFuncValues[index];
-
-                    dotLF += 
-                        Llm * vec3(
-                            F.coeffs[index * 3 + 0],    // R
-                            F.coeffs[index * 3 + 1],    // G
-                            F.coeffs[index * 3 + 2]     // B
-                        );
-                }
-            }*/
-
             // Precalculate factors for L coefficient
             vec3 dotLF = vec3(0.0f);
             for(int lSH = 0; lSH <= CONVOLUTION_L; ++lSH)
             {
                 factorCoeffL[lSH] = getFactorCoeffL(lSH, alpha);
             }
-
+            
+            // L . F
             int currL = 0;
             const int CONVOLUTION_NUM_COEFFS = (CONVOLUTION_L + 1) * (CONVOLUTION_L + 1);
             for(int i = 0; i < CONVOLUTION_NUM_COEFFS; ++i)
@@ -391,7 +346,7 @@ vec3 getIndirectLight(
                     );
             }
 
-            // Add "Lj(L * F)" from each HVL
+            // Add "Lj(L . F)" from each HVL
             vec3 Lj = getLj(fRsmSize, halfAngle, hvlRadius, hvlNormal, normal, -wLight, hvlToPrimaryLight, yBrdfIndex, uvIndex);
             color += Lj * dotLF;
 
