@@ -429,22 +429,7 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
     #endif
 
     // Obtain coefficient vector F (with cosine term)
-    // TODO: remove multiple SH set accesses across direct/indirect calculations
     const SHData F = shCoefficients.coefficientSets[getBrdfCosVectorIndex(normal, viewDir, xBrdfIndex)];
-    /*for(int lSH = 0; lSH <= DIRECT_CONVOLUTION_L; ++lSH)
-    {
-        for(int mSH = -lSH; mSH <= lSH; ++mSH)
-        {
-            int index = lSH * (lSH + 1) + mSH;
-
-            color += 
-                vec3(
-                    F.coeffs[index * 3 + 0],  // R
-                    F.coeffs[index * 3 + 1],  // G
-                    F.coeffs[index * 3 + 2]   // B
-                ) * shBasisFuncValues[index];
-        }
-    }*/
     const int DIRECT_CONVOLUTION_NUM_COEFFS = (DIRECT_CONVOLUTION_L + 1) * (DIRECT_CONVOLUTION_L + 1);
     for(int i = 0; i < DIRECT_CONVOLUTION_NUM_COEFFS; ++i)
     {
@@ -456,7 +441,9 @@ vec3 getDirectLight(vec3 worldPos, vec3 lightPos, vec3 normal, vec3 viewDir, uin
             ) * shBasisFuncValues[i];
     }
 
-    // TODO: double check this
+    // Step function. Rewritten so 0 is returned when dot(N, L) = 0.
+    color *= 1.0f - step(0.0f, -dot(normal, toLight)); 
+
     //color *= PRIMARY_LIGHT_POWER;
     color *= 20.0f;
 
