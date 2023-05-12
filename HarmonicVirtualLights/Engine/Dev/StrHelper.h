@@ -9,4 +9,5 @@ public:
 		std::vector<std::string>& output);
 
 	static std::string toTimingStr(float x);
+	static std::string vecToStr(const glm::vec3& vec);
 };

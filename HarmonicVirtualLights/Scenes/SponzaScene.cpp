@@ -117,6 +117,10 @@ void SponzaScene::init()
 		glm::vec3(2.0f, 1.0f, 0.0f),
 		glm::vec3(0.0f)
 	);
+
+	// Camera setup for screenshot
+	/*this->camera.setPosition(glm::vec3(4.216015, 2.324934, -0.612709));
+	this->camera.setRotation(-1.340796, -0.364000);*/
 }
 
 void SponzaScene::update()
