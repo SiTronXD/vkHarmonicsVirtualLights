@@ -10,8 +10,8 @@
 
 #define RSM_FOV (HALF_PI)
 #define COS_HALF_FOV 0.70710678118654752440084436210485
-#define PRIMARY_LIGHT_POWER 20.0f
-#define PRIMARY_LIGHT_POWER_HVL (400.0f) // This can be used separately to enhance indirect light
+#define PRIMARY_LIGHT_POWER 400.0f
+#define PRIMARY_LIGHT_POWER_HVL (PRIMARY_LIGHT_POWER) // This can be used separately to enhance indirect light
 #define MAX_RSM_SIZE 8
 
 #define NUM_ANGLES 90
