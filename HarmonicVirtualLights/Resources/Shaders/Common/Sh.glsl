@@ -111,13 +111,19 @@ float y(int l, int m, float cosTheta, float phi)
     return v;
 }
 
-mat3x3 getWorldToTangentMat(vec3 normal, vec3 approxViewDir)
+mat3x3 getWorldToTangentMat(vec3 normal, vec3 outgoingDir)
 {
     // Based on coordinate system provided in "A Data-Driven Reflectance Model"
     // by Wojciech Matusik, Hanspeter Pfister, Matt Brand, Leonard McMillan
     // http://www.csbio.unc.edu/mcmillan/pubs/sig03_matusik.pdf
 
-    vec3 tangentLeft = normalize(cross(normal, approxViewDir)); // TODO: fix edge case where normal == approxViewDir
+    // Handle case where normal == outgoingDir
+    vec3 omegaO = outgoingDir;
+    if(dot(normal, omegaO) >= 0.9999f) omegaO = vec3(0.0f, 1.0f, 0.0f);
+    if(dot(normal, omegaO) >= 0.9999f) omegaO = vec3(1.0f, 0.0f, 0.0f);
+
+    // Tangent vectors
+    vec3 tangentLeft = normalize(cross(normal, omegaO));
     vec3 tangentForward = cross(tangentLeft, normal);
 
     return transpose(mat3x3(tangentLeft, normal, tangentForward));

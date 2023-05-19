@@ -1,11 +1,6 @@
 # Harmonics Virtual Lights
 A Vulkan implementation of HVLs for my bachelor thesis project. A more detailed description + screenshots will be added later.
 
-# TODO:
-* Consider removing spotlight cutoff, since HVLs are distributed in a square
-* "TODO: fix edge case where normal == viewDir" in tangent space transform
-* Enable/disable imgui
-
 # Vulkan features used
 * Version 1.3
 * Dynamic rendering
