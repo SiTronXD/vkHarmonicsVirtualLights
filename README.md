@@ -27,7 +27,7 @@ A lot of emphasis was placed on optimization throughout the thesis work. The ini
 * EnTT: entity components system
 * fast_obj: OBJ mesh importing
 * GLFW: window management
-* GLM: math
+* GLM: vector and matrix math
 * stb: image importing
 * Vulkan: graphics and GPU management
 * Vulkan Memory allocator: GPU memory management
