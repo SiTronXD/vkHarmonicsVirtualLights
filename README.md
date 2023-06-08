@@ -2,8 +2,7 @@
 A Vulkan implementation of the paper "Harmonics Virtual Lights: Fast Projection of Luminance Field on Spherical Harmonics for Efficient Rendering" (https://doi.org/10.1111/cgf.14564) for my bachelor thesis project. The technique approximates global illumination in real-time with virtual lights. The virtual light sources make use of spherical shapes and utilize spherical harmonics for fast light projection and integration, rather than relying on traditional numerical schemes.
 
 # Screenshots
-![github-small](Screenshots/SponzaSceneResults.png)
-![github-small](Screenshots/TestSceneResults.png)
+![github-small](Screenshots/VisualResults.png)
 ![github-small](Screenshots/DragonSceneBenchmarkView.png)
 
 # Vulkan features used
