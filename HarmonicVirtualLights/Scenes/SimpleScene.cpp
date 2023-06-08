@@ -1,19 +1,19 @@
 #include "pch.h"
-#include "TestScene.h"
+#include "SimpleScene.h"
 #include "../Engine/ResourceManager.h"
 #include "../Engine/Graphics/Renderer.h"
 
 #include <imgui/imgui.h>
 
-TestScene::TestScene()
+SimpleScene::SimpleScene()
 {
 }
 
-TestScene::~TestScene()
+SimpleScene::~SimpleScene()
 {
 }
 
-void TestScene::init()
+void SimpleScene::init()
 {
 	this->camera.init(this->getWindow());
 
@@ -89,7 +89,7 @@ void TestScene::init()
 	);
 }
 
-void TestScene::update()
+void SimpleScene::update()
 {
 	this->camera.update();
 }

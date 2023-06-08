@@ -2,13 +2,13 @@
 
 #include "../Engine/Application/Scene.h"
 
-class TestScene : public Scene
+class SimpleScene : public Scene
 {
 private:
 	
 public:
-	TestScene();
-	~TestScene();
+	SimpleScene();
+	~SimpleScene();
 
 	void init() override;
 	void update() override;

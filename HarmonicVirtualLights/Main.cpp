@@ -1,7 +1,8 @@
 #include "pch.h"
 #include <stdexcept>
 #include "Engine/Engine.h"
-#include "Scenes/TestScene.h"
+
+#include "Scenes/SimpleScene.h"
 #include "Scenes/SponzaScene.h"
 #include "Scenes/DragonScene.h"
 #include "Scenes/ManyMeshesScene.h"

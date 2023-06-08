@@ -201,7 +201,7 @@
     <ClCompile Include="Engine\Graphics\RSM.cpp" />
     <ClCompile Include="Engine\Graphics\Vulkan\QueryPoolArray.cpp" />
     <ClCompile Include="Engine\Graphics\MaterialSet.cpp" />
-    <ClCompile Include="Scenes\TestScene.cpp" />
+    <ClCompile Include="Scenes\SimpleScene.cpp" />
     <ClCompile Include="Engine\Dev\StrHelper.cpp" />
     <ClCompile Include="Engine\Graphics\Buffer\UniformBuffer.cpp" />
     <ClCompile Include="Engine\Graphics\Buffer\StorageBuffer.cpp" />
@@ -275,7 +275,7 @@
     <ClInclude Include="Engine\Graphics\RSM.h" />
     <ClInclude Include="Engine\Graphics\Vulkan\QueryPoolArray.h" />
     <ClInclude Include="Engine\Graphics\MaterialSet.h" />
-    <ClInclude Include="Scenes\TestScene.h" />
+    <ClInclude Include="Scenes\SimpleScene.h" />
     <ClInclude Include="Engine\Dev\StrHelper.h" />
     <ClInclude Include="Engine\Graphics\Buffer\UniformBuffer.h" />
     <ClInclude Include="Engine\Graphics\Buffer\StorageBuffer.h" />

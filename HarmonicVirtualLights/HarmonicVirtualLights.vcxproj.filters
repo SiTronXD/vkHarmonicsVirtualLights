@@ -18,7 +18,7 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scenes\TestScene.cpp">
+    <ClCompile Include="Scenes\SimpleScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Application\Input.cpp">
@@ -221,7 +221,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Scenes\TestScene.h">
+    <ClInclude Include="Scenes\SimpleScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Application\Input.h">
